@@ -1,6 +1,12 @@
+<div align="center" style="background-color: white; padding: 20px; border-radius: 10px;">
+
 # TradeSkills
 
 A platform for listing, trading, and exchanging skills and services.
+
+<img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="TradeSkills Logo" width="150px"/>
+
+</div>
 
 ## Description
 
@@ -17,7 +23,13 @@ TradeSkills is a web application that allows users to list their skills, service
 
 ## Technologies Used
 
-- HTML5, CSS3, JavaScript
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+<img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"/>
+</div>
+
 - Firebase Authentication
 - Firebase Firestore (database)
 - Firebase Storage (image uploads)
@@ -44,6 +56,10 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support My Work
 
+<div align="center">
 If you find this project helpful or valuable, you can support me by clicking on the link below:
 
-[![Buy Me A Coffee](assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png)](https://www.buymeacoffee.com/rorrimaesu)
+<a href="https://www.buymeacoffee.com/rorrimaesu" target="_blank">
+  <img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="Buy Me A Coffee" width="200px" style="border-radius: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+</a>
+</div>
