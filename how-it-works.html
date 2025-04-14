@@ -3,20 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeSkills - Exchange Goods and Services</title>
-    <meta name="description" content="TradeSkills is a platform where you can exchange goods and services without cash.">
+    <title>How It Works - TradeSkills</title>
+    <meta name="description" content="Learn how to use TradeSkills to exchange goods and services without cash.">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    <script>
-        // Handle SPA redirect from 404.html
-        (function() {
-            const redirect = new URLSearchParams(window.location.search).get('redirect');
-            if (redirect) {
-                const cleanRedirect = redirect.replace(/^\/+/, '');
-                history.replaceState(null, null, cleanRedirect || '/');
-            }
-        })();
-    </script>
 </head>
 <body>
     <header class="nav-bar" id="main-header">
@@ -25,9 +15,9 @@
                 <a href="index.html">TradeSkills</a>
             </div>
             <nav class="nav-links" id="nav-links">
-                <a href="index.html" class="active">Home</a>
+                <a href="index.html">Home</a>
                 <a href="marketplace.html">Marketplace</a>
-                <a href="how-it-works.html">How It Works</a>
+                <a href="how-it-works.html" class="active">How It Works</a>
                 <a href="about.html">About</a>
             </nav>
             <div class="auth-buttons" id="auth-buttons">
@@ -43,66 +33,61 @@
     </header>
 
     <main id="main-content" class="main-content">
-        <section id="home-section" class="section section-home">
-            <div class="hero">
-                <h1>TradeSkills</h1>
-                <p>Exchange goods and services without cash. Join our bartering community today!</p>
-                <button id="join-now-button" class="cta-button">Join Now</button>
-            </div>
+        <section class="section">
+            <div class="container">
+                <h1>How TradeSkills Works</h1>
+                <p class="section-intro">TradeSkills is a platform that allows you to exchange goods and services without using cash. Here's how to get started:</p>
 
-            <div class="features">
-                <div class="feature">
-                    <h2>Create Listings</h2>
-                    <p>List items or services you want to trade. Add photos and detailed descriptions.</p>
-                </div>
-                <div class="feature">
-                    <h2>Find Trades</h2>
-                    <p>Browse the marketplace for items or services you need.</p>
-                </div>
-                <div class="feature">
-                    <h2>Make Offers</h2>
-                    <p>Propose trades with other users. Negotiate until both parties are satisfied.</p>
-                </div>
-                <div class="feature">
-                    <h2>Complete Trades</h2>
-                    <p>Finalize trades securely, leave feedback, and build your reputation.</p>
-                </div>
-            </div>
-
-            <div class="how-it-works">
-                <h2>How It Works</h2>
                 <div class="steps">
                     <div class="step">
                         <div class="step-number">1</div>
                         <h3>Create Your Profile</h3>
-                        <p>Sign up and complete your profile with your interests and trade preferences.</p>
+                        <p>Sign up for a free account and complete your profile. Add information about your interests, skills, and what you're looking to trade.</p>
                     </div>
                     <div class="step">
                         <div class="step-number">2</div>
-                        <h3>List Your Items</h3>
-                        <p>Add items or services you're willing to trade.</p>
+                        <h3>List Your Items or Services</h3>
+                        <p>Create listings for items you want to trade or services you can offer. Add photos, descriptions, and specify what you're looking for in return.</p>
                     </div>
                     <div class="step">
                         <div class="step-number">3</div>
-                        <h3>Browse & Offer</h3>
-                        <p>Find items you want and make trade offers.</p>
+                        <h3>Browse the Marketplace</h3>
+                        <p>Explore listings from other users to find items or services you need. Use filters to narrow down your search by category or location.</p>
                     </div>
                     <div class="step">
                         <div class="step-number">4</div>
-                        <h3>Complete Trades</h3>
-                        <p>Finalize the deal and arrange exchange details.</p>
+                        <h3>Make Trade Offers</h3>
+                        <p>When you find something you want, make a trade offer. Propose what you're willing to exchange and negotiate with the other user.</p>
                     </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <h3>Complete the Trade</h3>
+                        <p>Once both parties agree, arrange the exchange details. Meet in person or arrange shipping depending on the items being traded.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">6</div>
+                        <h3>Leave Feedback</h3>
+                        <p>After completing a trade, leave feedback for the other user. This helps build trust in the community and improves your reputation.</p>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <h2>Trading Guidelines</h2>
+                <ul class="guidelines-list">
+                    <li><strong>Be Honest:</strong> Provide accurate descriptions and photos of your items.</li>
+                    <li><strong>Communicate Clearly:</strong> Respond promptly and be clear about your expectations.</li>
+                    <li><strong>Be Fair:</strong> Offer reasonable trades that provide value to both parties.</li>
+                    <li><strong>Stay Safe:</strong> Meet in public places for in-person exchanges or use secure shipping methods.</li>
+                    <li><strong>Respect Others:</strong> Be courteous and professional in all interactions.</li>
+                </ul>
+
+                <div class="cta-container">
+                    <h3>Ready to Start Trading?</h3>
+                    <button id="join-now-button" class="cta-button">Join TradeSkills Now</button>
                 </div>
             </div>
         </section>
-
-        <!-- Loading spinner for async operations -->
-        <div class="loading-spinner" id="loading-spinner">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- Error display -->
-        <div class="error-display" id="error-display"></div>
     </main>
 
     <footer class="footer" id="main-footer">
@@ -223,20 +208,7 @@
         </div>
     </div>
 
-    <!-- User Profile Dropdown -->
-    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
-        <ul>
-            <li id="profile-name">Name</li>
-            <li><a href="dashboard.html">My Dashboard</a></li>
-            <li><a href="profile.html">Profile Settings</a></li>
-            <li><a href="my-listings.html">My Listings</a></li>
-            <li><a href="my-trades.html">My Trades</a></li>
-            <li><a href="#" id="logout-button">Logout</a></li>
-        </ul>
-    </div>
-
     <!-- JavaScript -->
-    <script src="scripts/app.js" type="module"></script>
     <script>
         // Initialize mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {

@@ -3,20 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeSkills - Exchange Goods and Services</title>
-    <meta name="description" content="TradeSkills is a platform where you can exchange goods and services without cash.">
+    <title>Marketplace - TradeSkills</title>
+    <meta name="description" content="Browse items and services available for trade on TradeSkills.">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    <script>
-        // Handle SPA redirect from 404.html
-        (function() {
-            const redirect = new URLSearchParams(window.location.search).get('redirect');
-            if (redirect) {
-                const cleanRedirect = redirect.replace(/^\/+/, '');
-                history.replaceState(null, null, cleanRedirect || '/');
-            }
-        })();
-    </script>
 </head>
 <body>
     <header class="nav-bar" id="main-header">
@@ -25,8 +15,8 @@
                 <a href="index.html">TradeSkills</a>
             </div>
             <nav class="nav-links" id="nav-links">
-                <a href="index.html" class="active">Home</a>
-                <a href="marketplace.html">Marketplace</a>
+                <a href="index.html">Home</a>
+                <a href="marketplace.html" class="active">Marketplace</a>
                 <a href="how-it-works.html">How It Works</a>
                 <a href="about.html">About</a>
             </nav>
@@ -43,54 +33,97 @@
     </header>
 
     <main id="main-content" class="main-content">
-        <section id="home-section" class="section section-home">
-            <div class="hero">
-                <h1>TradeSkills</h1>
-                <p>Exchange goods and services without cash. Join our bartering community today!</p>
-                <button id="join-now-button" class="cta-button">Join Now</button>
-            </div>
+        <section id="marketplace-section" class="section">
+            <div class="container">
+                <div class="marketplace-header">
+                    <h1>Marketplace</h1>
+                    <button class="btn-primary" id="create-listing-button">Create Listing</button>
+                </div>
 
-            <div class="features">
-                <div class="feature">
-                    <h2>Create Listings</h2>
-                    <p>List items or services you want to trade. Add photos and detailed descriptions.</p>
+                <div class="marketplace-filters">
+                    <div class="form-group">
+                        <input type="text" id="search-input" placeholder="Search listings...">
+                    </div>
+                    <div class="form-group">
+                        <select id="category-filter">
+                            <option value="">All Categories</option>
+                            <option value="goods">Goods</option>
+                            <option value="services">Services</option>
+                            <option value="skills">Skills</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="sort-filter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="feature">
-                    <h2>Find Trades</h2>
-                    <p>Browse the marketplace for items or services you need.</p>
-                </div>
-                <div class="feature">
-                    <h2>Make Offers</h2>
-                    <p>Propose trades with other users. Negotiate until both parties are satisfied.</p>
-                </div>
-                <div class="feature">
-                    <h2>Complete Trades</h2>
-                    <p>Finalize trades securely, leave feedback, and build your reputation.</p>
-                </div>
-            </div>
 
-            <div class="how-it-works">
-                <h2>How It Works</h2>
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>Create Your Profile</h3>
-                        <p>Sign up and complete your profile with your interests and trade preferences.</p>
+                <div class="marketplace-grid" id="listings-container">
+                    <!-- Sample listings for demonstration -->
+                    <div class="marketplace-card">
+                        <img src="assets/images/placeholder.jpg" alt="Handmade Furniture">
+                        <div class="marketplace-card-content">
+                            <h3>Handmade Wooden Chair</h3>
+                            <p>Beautiful handcrafted wooden chair made from reclaimed oak.</p>
+                            <p><strong>Looking for:</strong> Gardening services or tools</p>
+                        </div>
+                        <div class="marketplace-card-footer">
+                            <div class="user-badge">
+                                <img src="assets/images/default-avatar.png" alt="User">
+                                <span>John D.</span>
+                            </div>
+                            <button class="btn-primary">View Details</button>
+                        </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>List Your Items</h3>
-                        <p>Add items or services you're willing to trade.</p>
+
+                    <div class="marketplace-card">
+                        <img src="assets/images/placeholder.jpg" alt="Web Design Services">
+                        <div class="marketplace-card-content">
+                            <h3>Web Design Services</h3>
+                            <p>Professional web design services for small businesses and individuals.</p>
+                            <p><strong>Looking for:</strong> Photography or graphic design</p>
+                        </div>
+                        <div class="marketplace-card-footer">
+                            <div class="user-badge">
+                                <img src="assets/images/default-avatar.png" alt="User">
+                                <span>Sarah M.</span>
+                            </div>
+                            <button class="btn-primary">View Details</button>
+                        </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>Browse & Offer</h3>
-                        <p>Find items you want and make trade offers.</p>
+
+                    <div class="marketplace-card">
+                        <img src="assets/images/placeholder.jpg" alt="Homemade Jam">
+                        <div class="marketplace-card-content">
+                            <h3>Homemade Strawberry Jam</h3>
+                            <p>Delicious homemade strawberry jam made from organic berries.</p>
+                            <p><strong>Looking for:</strong> Fresh vegetables or baked goods</p>
+                        </div>
+                        <div class="marketplace-card-footer">
+                            <div class="user-badge">
+                                <img src="assets/images/default-avatar.png" alt="User">
+                                <span>Emily R.</span>
+                            </div>
+                            <button class="btn-primary">View Details</button>
+                        </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <h3>Complete Trades</h3>
-                        <p>Finalize the deal and arrange exchange details.</p>
+
+                    <div class="marketplace-card">
+                        <img src="assets/images/placeholder.jpg" alt="Guitar Lessons">
+                        <div class="marketplace-card-content">
+                            <h3>Guitar Lessons</h3>
+                            <p>One-on-one guitar lessons for beginners and intermediate players.</p>
+                            <p><strong>Looking for:</strong> Language lessons or computer repair</p>
+                        </div>
+                        <div class="marketplace-card-footer">
+                            <div class="user-badge">
+                                <img src="assets/images/default-avatar.png" alt="User">
+                                <span>Michael T.</span>
+                            </div>
+                            <button class="btn-primary">View Details</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -223,20 +256,7 @@
         </div>
     </div>
 
-    <!-- User Profile Dropdown -->
-    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
-        <ul>
-            <li id="profile-name">Name</li>
-            <li><a href="dashboard.html">My Dashboard</a></li>
-            <li><a href="profile.html">Profile Settings</a></li>
-            <li><a href="my-listings.html">My Listings</a></li>
-            <li><a href="my-trades.html">My Trades</a></li>
-            <li><a href="#" id="logout-button">Logout</a></li>
-        </ul>
-    </div>
-
     <!-- JavaScript -->
-    <script src="scripts/app.js" type="module"></script>
     <script>
         // Initialize mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
@@ -259,7 +279,6 @@
             const registerTab = document.getElementById('register-tab');
             const loginForm = document.getElementById('login-form');
             const registerForm = document.getElementById('register-form');
-            const joinNowButton = document.getElementById('join-now-button');
 
             function showAuthModal() {
                 if (authModal) {
@@ -285,16 +304,6 @@
 
             if (registerButton) {
                 registerButton.addEventListener('click', function() {
-                    showAuthModal();
-                    loginTab.classList.remove('active');
-                    registerTab.classList.add('active');
-                    loginForm.style.display = 'none';
-                    registerForm.style.display = 'block';
-                });
-            }
-
-            if (joinNowButton) {
-                joinNowButton.addEventListener('click', function() {
                     showAuthModal();
                     loginTab.classList.remove('active');
                     registerTab.classList.add('active');
@@ -331,6 +340,16 @@
                     hideAuthModal();
                 }
             });
+
+            // Create listing button (redirect to login if not authenticated)
+            const createListingButton = document.getElementById('create-listing-button');
+            if (createListingButton) {
+                createListingButton.addEventListener('click', function() {
+                    // In a real app, check if user is authenticated
+                    // For now, just show the login modal
+                    showAuthModal();
+                });
+            }
         });
     </script>
 </body>

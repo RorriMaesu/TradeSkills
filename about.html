@@ -3,20 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeSkills - Exchange Goods and Services</title>
-    <meta name="description" content="TradeSkills is a platform where you can exchange goods and services without cash.">
+    <title>About - TradeSkills</title>
+    <meta name="description" content="Learn about TradeSkills, our mission, and the team behind the platform.">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    <script>
-        // Handle SPA redirect from 404.html
-        (function() {
-            const redirect = new URLSearchParams(window.location.search).get('redirect');
-            if (redirect) {
-                const cleanRedirect = redirect.replace(/^\/+/, '');
-                history.replaceState(null, null, cleanRedirect || '/');
-            }
-        })();
-    </script>
 </head>
 <body>
     <header class="nav-bar" id="main-header">
@@ -25,10 +15,10 @@
                 <a href="index.html">TradeSkills</a>
             </div>
             <nav class="nav-links" id="nav-links">
-                <a href="index.html" class="active">Home</a>
+                <a href="index.html">Home</a>
                 <a href="marketplace.html">Marketplace</a>
                 <a href="how-it-works.html">How It Works</a>
-                <a href="about.html">About</a>
+                <a href="about.html" class="active">About</a>
             </nav>
             <div class="auth-buttons" id="auth-buttons">
                 <button id="login-button" class="btn-login">Login</button>
@@ -43,66 +33,46 @@
     </header>
 
     <main id="main-content" class="main-content">
-        <section id="home-section" class="section section-home">
-            <div class="hero">
-                <h1>TradeSkills</h1>
-                <p>Exchange goods and services without cash. Join our bartering community today!</p>
-                <button id="join-now-button" class="cta-button">Join Now</button>
-            </div>
+        <section class="section">
+            <div class="container">
+                <h1>About TradeSkills</h1>
 
-            <div class="features">
-                <div class="feature">
-                    <h2>Create Listings</h2>
-                    <p>List items or services you want to trade. Add photos and detailed descriptions.</p>
+                <div class="about-section">
+                    <h2>Our Mission</h2>
+                    <p>TradeSkills was created with a simple mission: to enable people to exchange goods and services directly, without the need for cash. We believe in the power of community and the value of skills and resources that everyone possesses.</p>
+                    <p>In a world where economic inequality continues to grow, we aim to provide an alternative system where people can meet their needs through direct exchange, building community connections in the process.</p>
                 </div>
-                <div class="feature">
-                    <h2>Find Trades</h2>
-                    <p>Browse the marketplace for items or services you need.</p>
-                </div>
-                <div class="feature">
-                    <h2>Make Offers</h2>
-                    <p>Propose trades with other users. Negotiate until both parties are satisfied.</p>
-                </div>
-                <div class="feature">
-                    <h2>Complete Trades</h2>
-                    <p>Finalize trades securely, leave feedback, and build your reputation.</p>
-                </div>
-            </div>
 
-            <div class="how-it-works">
-                <h2>How It Works</h2>
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>Create Your Profile</h3>
-                        <p>Sign up and complete your profile with your interests and trade preferences.</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>List Your Items</h3>
-                        <p>Add items or services you're willing to trade.</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>Browse & Offer</h3>
-                        <p>Find items you want and make trade offers.</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <h3>Complete Trades</h3>
-                        <p>Finalize the deal and arrange exchange details.</p>
-                    </div>
+                <div class="about-section">
+                    <h2>Our Story</h2>
+                    <p>TradeSkills began in 2024 when our founder, Andrew Green, noticed how many people in his community had valuable skills and items that others needed, but lacked the cash to make traditional purchases.</p>
+                    <p>Inspired by ancient bartering systems and modern sharing economies, Andrew developed TradeSkills as a platform to facilitate these exchanges in a user-friendly, secure environment.</p>
+                    <p>What started as a small local project has grown into a community of thousands of users exchanging everything from homemade goods to professional services.</p>
+                </div>
+
+                <div class="about-section">
+                    <h2>Our Values</h2>
+                    <ul class="values-list">
+                        <li><strong>Community:</strong> We believe in the power of local connections and mutual support.</li>
+                        <li><strong>Sustainability:</strong> By encouraging reuse and sharing of resources, we reduce waste and environmental impact.</li>
+                        <li><strong>Accessibility:</strong> We strive to make our platform accessible to everyone, regardless of economic status.</li>
+                        <li><strong>Trust:</strong> We build systems that foster trust between users and with our platform.</li>
+                        <li><strong>Empowerment:</strong> We help people recognize and leverage the value of their skills and possessions.</li>
+                    </ul>
+                </div>
+
+                <div class="about-section">
+                    <h2>How We're Different</h2>
+                    <p>Unlike traditional marketplaces, TradeSkills doesn't use money as the medium of exchange. Instead, we facilitate direct trades between users, allowing them to exchange goods and services based on mutual agreement of value.</p>
+                    <p>We don't charge fees or take a percentage of trades. Our platform is supported by optional donations and community contributions.</p>
+                </div>
+
+                <div class="cta-container">
+                    <h3>Join Our Community</h3>
+                    <button id="join-now-button" class="cta-button">Sign Up Now</button>
                 </div>
             </div>
         </section>
-
-        <!-- Loading spinner for async operations -->
-        <div class="loading-spinner" id="loading-spinner">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- Error display -->
-        <div class="error-display" id="error-display"></div>
     </main>
 
     <footer class="footer" id="main-footer">
@@ -223,20 +193,7 @@
         </div>
     </div>
 
-    <!-- User Profile Dropdown -->
-    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
-        <ul>
-            <li id="profile-name">Name</li>
-            <li><a href="dashboard.html">My Dashboard</a></li>
-            <li><a href="profile.html">Profile Settings</a></li>
-            <li><a href="my-listings.html">My Listings</a></li>
-            <li><a href="my-trades.html">My Trades</a></li>
-            <li><a href="#" id="logout-button">Logout</a></li>
-        </ul>
-    </div>
-
     <!-- JavaScript -->
-    <script src="scripts/app.js" type="module"></script>
     <script>
         // Initialize mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
