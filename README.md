@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://github.com/RorriMaesu/TradeSkills/assets/placeholder/white_background.png" width="100%" height="auto" style="background-color:white" alt="">
-  
+  <img src="assets/images/blueHeroBackground.png" width="100%" height="auto" style="background-color:white" alt="TradeSkills Hero Image">
+
   <div style="background-color: white; color: black; padding: 20px; border-radius: 10px;">
 
 # TradeSkills
@@ -44,7 +44,7 @@ TradeSkills is a web application that allows users to list their skills, service
 
 ## Getting Started
 
-Visit the live site at [tradeskills-2025.firebaseapp.com](https://tradeskills-2025.firebaseapp.com) to use the application.
+Visit the live site at [rorrimaesu.github.io/TradeSkills](https://rorrimaesu.github.io/TradeSkills/) to use the application.
 
 ### For Development
 
