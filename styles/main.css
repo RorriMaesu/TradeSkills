@@ -310,6 +310,17 @@ p {
     box-shadow: var(--box-shadow-heavy);
 }
 
+/* ----- Buy Me a Coffee ----- */
+.buymeacoffee-img {
+    max-width: 180px;
+    border-radius: var(--border-radius-sm);
+    transition: transform var(--transition-fast);
+}
+
+.buymeacoffee-img:hover {
+    transform: scale(1.05);
+}
+
 /* ----- Forms ----- */
 .form-group {
     margin-bottom: var(--spacing-md);

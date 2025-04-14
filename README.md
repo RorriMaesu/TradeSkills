@@ -41,3 +41,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## Author
 
 - [RorriMaesu](https://github.com/RorriMaesu)
+
+## Support My Work
+
+If you find this project helpful or valuable, you can support me by clicking on the link below:
+
+[![Buy Me A Coffee](assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png)](https://www.buymeacoffee.com/rorrimaesu)
