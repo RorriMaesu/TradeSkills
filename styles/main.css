@@ -1,4 +1,4 @@
-/* 
+/*
  * TradeSkills - Main Stylesheet
  * Contains base styles, components, and utility classes
  */
@@ -24,7 +24,7 @@
     --warning-color: #f39c12;
     --danger-color: #e74c3c;
     --border-color: #ddd;
-    
+
     /* Typography */
     --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --font-size-small: 0.875rem;
@@ -33,7 +33,7 @@
     --font-size-large: 1.5rem;
     --font-size-xlarge: 2rem;
     --font-size-xxlarge: 2.5rem;
-    
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -41,18 +41,18 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-xxl: 3rem;
-    
+
     /* Border Radius */
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
     --border-radius-lg: 16px;
     --border-radius-circle: 50%;
-    
+
     /* Box Shadow */
     --box-shadow-light: 0 2px 5px rgba(0, 0, 0, 0.1);
     --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     --box-shadow-heavy: 0 8px 30px rgba(0, 0, 0, 0.2);
-    
+
     /* Transitions */
     --transition-fast: 0.2s ease;
     --transition-medium: 0.3s ease;
@@ -478,7 +478,9 @@ p {
 .section-home .hero {
     text-align: center;
     padding: var(--spacing-xxl) 0;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.8)), url('../assets/images/blueHeroBackground.png');
+    background-size: cover;
+    background-position: center;
     color: white;
     border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-xxl);
@@ -514,6 +516,13 @@ p {
 .feature:hover {
     transform: translateY(-10px);
     box-shadow: var(--box-shadow);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: var(--spacing-md);
+    object-fit: contain;
 }
 
 .feature h2 {
@@ -696,6 +705,37 @@ p {
     display: flex;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+}
+
+.category-icons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.category-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.category-icon:hover {
+    transform: translateY(-5px);
+}
+
+.category-img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-sm);
+}
+
+.category-icon span {
+    font-weight: 500;
+    color: var(--primary-color);
 }
 
 .marketplace-grid {
