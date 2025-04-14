@@ -112,8 +112,9 @@
 
     <script type="module">
         import { testFirebaseConnection } from './scripts/test-firebase.js';
-        import { initializeDatabase } from './scripts/init-database.js';
-        import { firebaseConfig } from './scripts/firebase-config.js';
+        // import { initializeDatabase } from './scripts/init-database.js';
+        import { firebaseConfig, db } from './scripts/firebase-config.js';
+        import { collection, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         document.addEventListener('DOMContentLoaded', function() {
             // Display Firebase configuration
@@ -136,13 +137,13 @@
         async function testConnection() {
             const statusElement = document.getElementById('connection-status');
             const resultElement = document.getElementById('connection-result');
-            
+
             statusElement.innerHTML = 'Testing connection...';
             resultElement.innerHTML = 'Running tests...';
-            
+
             try {
                 const result = await testFirebaseConnection();
-                
+
                 if (result.success) {
                     statusElement.innerHTML = `
                         <div class="success">
@@ -175,29 +176,46 @@
         async function initDb() {
             const statusElement = document.getElementById('db-status');
             const resultElement = document.getElementById('db-result');
-            
+
             statusElement.innerHTML = 'Initializing database...';
             resultElement.innerHTML = 'Running initialization...';
-            
+
             try {
-                const result = await initializeDatabase();
-                
-                if (result.success) {
-                    statusElement.innerHTML = `
-                        <div class="success">
-                            <strong>Database initialized successfully!</strong>
-                        </div>
-                    `;
-                    resultElement.innerHTML = JSON.stringify(result, null, 2);
-                } else {
-                    statusElement.innerHTML = `
-                        <div class="error">
-                            <strong>Database initialization failed!</strong>
-                        </div>
-                    `;
-                    resultElement.innerHTML = JSON.stringify(result, null, 2);
-                }
+                // Initialize database with required collections
+                console.log('Initializing database...');
+
+                // Create users collection with a placeholder document
+                const usersRef = collection(db, 'users');
+                await setDoc(doc(usersRef, 'placeholder'), {
+                    createdAt: new Date(),
+                    note: 'This is a placeholder document to initialize the users collection'
+                });
+
+                // Create listings collection with a placeholder document
+                const listingsRef = collection(db, 'listings');
+                await setDoc(doc(listingsRef, 'placeholder'), {
+                    createdAt: new Date(),
+                    note: 'This is a placeholder document to initialize the listings collection'
+                });
+
+                // Create trades collection with a placeholder document
+                const tradesRef = collection(db, 'trades');
+                await setDoc(doc(tradesRef, 'placeholder'), {
+                    createdAt: new Date(),
+                    note: 'This is a placeholder document to initialize the trades collection'
+                });
+
+                console.log('Database initialized successfully!');
+                const result = { success: true };
+
+                statusElement.innerHTML = `
+                    <div class="success">
+                        <strong>Database initialized successfully!</strong>
+                    </div>
+                `;
+                resultElement.innerHTML = JSON.stringify(result, null, 2);
             } catch (error) {
+                console.error('Error initializing database:', error);
                 statusElement.innerHTML = `
                     <div class="error">
                         <strong>Error initializing database!</strong>
