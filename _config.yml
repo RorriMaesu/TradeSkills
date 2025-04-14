@@ -1,0 +1,22 @@
+# TradeSkills GitHub Pages Configuration
+name: "TradeSkills"
+description: "A platform for exchanging goods and services without cash"
+
+# GitHub Pages settings
+url: ""  # You'll need to fill this with your actual GitHub Pages URL
+baseurl: ""  # If your site is in a subdirectory, update this
+
+# Build settings
+permalink: pretty
+markdown: kramdown
+
+# SPA settings
+plugins:
+  - jekyll-seo-tag
+
+# 404 handling
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"

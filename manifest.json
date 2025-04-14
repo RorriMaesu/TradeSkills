@@ -1,0 +1,21 @@
+{
+  "name": "TradeSkills",
+  "short_name": "TradeSkills",
+  "description": "A platform for bartering goods and services without cash",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f9f9",
+  "theme_color": "#3498db",
+  "icons": [
+    {
+      "src": "assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+/*
+    This file ensures GitHub Pages doesn't apply Jekyll processing to your project.
+    This is important for SPAs like TradeSkills that manage their own routing.
+*/

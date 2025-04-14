@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeSkills - Exchange Goods and Services</title>
+    <meta name="description" content="TradeSkills is a platform where you can exchange goods and services without cash.">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <script>
+        // Handle SPA redirect from 404.html
+        (function() {
+            const redirect = new URLSearchParams(window.location.search).get('redirect');
+            if (redirect) {
+                const cleanRedirect = redirect.replace(/^\/+/, '');
+                history.replaceState(null, null, cleanRedirect || '/');
+            }
+        })();
+    </script>
+    <script src="scripts/app.js" type="module" defer></script>
+</head>
+<body>
+    <header id="main-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/" data-link>TradeSkills</a>
+            </div>
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="/" data-link class="active">Home</a></li>
+                    <li><a href="/marketplace" data-link>Marketplace</a></li>
+                    <li><a href="/how-it-works" data-link>How It Works</a></li>
+                    <li><a href="/about" data-link>About</a></li>
+                    <li id="auth-nav-item">
+                        <a href="#" id="login-button">Login</a>
+                    </li>
+                </ul>
+            </nav>
+            <button id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- Content will be loaded dynamically -->
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    <footer id="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TradeSkills</h3>
+                    <p>Exchange goods and services without cash. Join our bartering community today!</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/" data-link>Home</a></li>
+                        <li><a href="/marketplace" data-link>Marketplace</a></li>
+                        <li><a href="/how-it-works" data-link>How It Works</a></li>
+                        <li><a href="/about" data-link>About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p>Email: support@tradeskills.com</p>
+                    <p>Phone: (555) 123-4567</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TradeSkills. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="modal-tabs">
+                <button class="tab-button active" id="login-tab">Login</button>
+                <button class="tab-button" id="register-tab">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="submit-button">Login</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-login-button" class="social-button">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Login with Google
+                    </button>
+                </div>
+                <div class="form-group text-center">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+                <div id="login-error" class="error-message"></div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="submit-button">Register</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-register-button" class="social-button">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Register with Google
+                    </button>
+                </div>
+                <div id="register-error" class="error-message"></div>
+            </form>
+            
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="reset-email">Email</label>
+                    <input type="email" id="reset-email" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="submit-button">Reset Password</button>
+                </div>
+                <div class="form-group text-center">
+                    <a href="#" id="back-to-login-link">Back to Login</a>
+                </div>
+                <div id="reset-message" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div id="user-profile-dropdown" class="dropdown">
+        <ul>
+            <li id="profile-name">Name</li>
+            <li><a href="/dashboard" data-link>My Dashboard</a></li>
+            <li><a href="/profile" data-link>Profile Settings</a></li>
+            <li><a href="/my-listings" data-link>My Listings</a></li>
+            <li><a href="/my-trades" data-link>My Trades</a></li>
+            <li><a href="#" id="logout-button">Logout</a></li>
+        </ul>
+    </div>
+</body>
+</html>

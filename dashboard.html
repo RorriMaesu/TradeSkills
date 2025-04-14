@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | TradeSkills</title>
+  <meta name="description" content="Manage your TradeSkills listings and trades from your personal dashboard.">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/responsive.css">
+  <script src="scripts/app.js" type="module" defer></script>
+</head>
+<body>
+  <header id="main-header">
+    <div class="container">
+      <div class="logo">
+        <a href="/" data-link>TradeSkills</a>
+      </div>
+      <nav id="main-nav">
+        <ul>
+          <li><a href="/" data-link>Home</a></li>
+          <li><a href="/marketplace" data-link>Marketplace</a></li>
+          <li><a href="/how-it-works" data-link>How It Works</a></li>
+          <li><a href="/about" data-link>About</a></li>
+          <li id="auth-nav-item">
+            <a href="#" id="profile-button" class="user-profile-button">
+              <span class="profile-icon">👤</span>
+              <span class="profile-name">User</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <button id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content" class="dashboard-content">
+    <div class="container">
+      <h1>My Dashboard</h1>
+      
+      <div class="dashboard-grid">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+          <div class="user-info">
+            <div class="user-avatar">👤</div>
+            <h3 id="dashboard-user-name">User Name</h3>
+            <p id="dashboard-user-email">user@example.com</p>
+          </div>
+          
+          <nav class="dashboard-nav">
+            <ul>
+              <li><a href="/dashboard" data-link class="active">Dashboard</a></li>
+              <li><a href="/my-listings" data-link>My Listings</a></li>
+              <li><a href="/my-trades" data-link>My Trades</a></li>
+              <li><a href="/profile" data-link>Profile Settings</a></li>
+              <li><a href="#" id="dashboard-logout">Logout</a></li>
+            </ul>
+          </nav>
+        </aside>
+        
+        <!-- Main Dashboard Content -->
+        <div class="dashboard-main">
+          <!-- Stats Cards -->
+          <div class="stats-cards">
+            <div class="stat-card">
+              <h3>Active Listings</h3>
+              <p class="stat-number" id="active-listings-count">0</p>
+              <a href="/my-listings" data-link class="card-link">View All</a>
+            </div>
+            <div class="stat-card">
+              <h3>Pending Trades</h3>
+              <p class="stat-number" id="pending-trades-count">0</p>
+              <a href="/my-trades" data-link class="card-link">View All</a>
+            </div>
+            <div class="stat-card">
+              <h3>Completed Trades</h3>
+              <p class="stat-number" id="completed-trades-count">0</p>
+              <a href="/my-trades?status=completed" data-link class="card-link">View All</a>
+            </div>
+          </div>
+          
+          <!-- Recent Activity -->
+          <section class="dashboard-section">
+            <div class="section-header">
+              <h2>Recent Activity</h2>
+            </div>
+            <div class="section-content" id="recent-activity">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <!-- Activity items will be loaded dynamically -->
+              <ul class="activity-list"></ul>
+            </div>
+          </section>
+          
+          <!-- Recent Listings -->
+          <section class="dashboard-section">
+            <div class="section-header">
+              <h2>My Recent Listings</h2>
+              <a href="/create-listing" data-link class="btn btn-primary">Create New Listing</a>
+            </div>
+            <div class="section-content" id="recent-listings">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <!-- Listings will be loaded dynamically -->
+              <div class="listings-grid"></div>
+            </div>
+          </section>
+          
+          <!-- Trade Requests -->
+          <section class="dashboard-section">
+            <div class="section-header">
+              <h2>Pending Trade Requests</h2>
+              <a href="/my-trades" data-link class="btn btn-secondary">View All Trades</a>
+            </div>
+            <div class="section-content" id="trade-requests">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <!-- Trade requests will be loaded dynamically -->
+              <div class="trades-list"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer id="main-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>TradeSkills</h3>
+          <p>Exchange goods and services without cash. Join our bartering community today!</p>
+        </div>
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="/" data-link>Home</a></li>
+            <li><a href="/marketplace" data-link>Marketplace</a></li>
+            <li><a href="/how-it-works" data-link>How It Works</a></li>
+            <li><a href="/about" data-link>About</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <p>Email: support@tradeskills.com</p>
+          <p>Phone: (555) 123-4567</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 TradeSkills. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- User Profile Dropdown -->
+  <div id="user-profile-dropdown" class="dropdown">
+    <ul>
+      <li id="profile-name">Name</li>
+      <li><a href="/dashboard" data-link>My Dashboard</a></li>
+      <li><a href="/profile" data-link>Profile Settings</a></li>
+      <li><a href="/my-listings" data-link>My Listings</a></li>
+      <li><a href="/my-trades" data-link>My Trades</a></li>
+      <li><a href="#" id="logout-button">Logout</a></li>
+    </ul>
+  </div>
+</body>
+</html>
