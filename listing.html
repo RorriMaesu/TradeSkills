@@ -7,7 +7,7 @@
     <meta name="description" content="View listing details and propose trades on TradeSkills.">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
-    <script src="scripts/app.js" type="module" defer></script>
+    <script src="scripts/main.js" type="module" defer></script>
 </head>
 <body>
     <header id="main-header">
@@ -81,7 +81,7 @@
                 <button class="tab-button active" id="login-tab">Login</button>
                 <button class="tab-button" id="register-tab">Register</button>
             </div>
-            
+
             <!-- Login Form -->
             <form id="login-form" class="auth-form">
                 <div class="form-group">
@@ -106,7 +106,7 @@
                 </div>
                 <div id="login-error" class="error-message"></div>
             </form>
-            
+
             <!-- Register Form -->
             <form id="register-form" class="auth-form" style="display: none;">
                 <div class="form-group">
@@ -136,7 +136,7 @@
                 </div>
                 <div id="register-error" class="error-message"></div>
             </form>
-            
+
             <!-- Forgot Password Form -->
             <form id="forgot-password-form" class="auth-form" style="display: none;">
                 <div class="form-group">
@@ -171,7 +171,7 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2>Propose a Trade</h2>
-            
+
             <div class="trade-proposal-form">
                 <div class="trade-items">
                     <div class="trade-item">
@@ -190,17 +190,17 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="trade-message">Message to Listing Owner (Optional)</label>
                     <textarea id="trade-message" rows="3" placeholder="Introduce yourself and explain why you're interested in this trade..."></textarea>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="button" id="cancel-trade-button" class="btn btn-secondary">Cancel</button>
                     <button type="button" id="propose-trade-button" class="btn btn-primary" disabled>Propose Trade</button>
                 </div>
-                
+
                 <div id="trade-proposal-error" class="error-message"></div>
             </div>
         </div>

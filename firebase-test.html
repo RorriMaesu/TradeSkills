@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test | TradeSkills</title>
+    <meta name="description" content="Test page for Firebase connection.">
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <header class="nav-bar" id="main-header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">TradeSkills</a>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="test-auth.html">Test Auth</a>
+                <a href="firebase-test.html" class="active">Firebase Test</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="main-content">
+        <div class="test-container">
+            <h1>Firebase Connection Test</h1>
+            <p>Use this page to test the Firebase connection and database setup.</p>
+
+            <div class="test-section">
+                <h2>Firebase Connection Status</h2>
+                <div id="connection-status">Click the button below to test the connection.</div>
+                <div class="test-buttons">
+                    <button id="test-connection-button" class="btn-primary">Test Connection</button>
+                </div>
+                <div id="connection-result" class="test-result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Database Initialization</h2>
+                <div id="db-status">Click the button below to initialize the database.</div>
+                <div class="test-buttons">
+                    <button id="init-db-button" class="btn-primary">Initialize Database</button>
+                </div>
+                <div id="db-result" class="test-result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Firebase Configuration</h2>
+                <div id="config-status">Your current Firebase configuration:</div>
+                <div id="config-result" class="test-result"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer" id="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TradeSkills</h3>
+                    <p>Exchange goods and services without cash. Join our bartering community today!</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TradeSkills. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { testFirebaseConnection } from './scripts/test-firebase.js';
+        import { initializeDatabase } from './scripts/init-database.js';
+        import { firebaseConfig } from './scripts/firebase-config.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display Firebase configuration
+            const configResult = document.getElementById('config-result');
+            configResult.textContent = JSON.stringify({
+                apiKey: firebaseConfig.apiKey,
+                authDomain: firebaseConfig.authDomain,
+                projectId: firebaseConfig.projectId,
+                storageBucket: firebaseConfig.storageBucket,
+                messagingSenderId: firebaseConfig.messagingSenderId,
+                appId: firebaseConfig.appId,
+                measurementId: firebaseConfig.measurementId
+            }, null, 2);
+
+            // Set up event listeners for test buttons
+            document.getElementById('test-connection-button').addEventListener('click', testConnection);
+            document.getElementById('init-db-button').addEventListener('click', initDb);
+        });
+
+        async function testConnection() {
+            const statusElement = document.getElementById('connection-status');
+            const resultElement = document.getElementById('connection-result');
+            
+            statusElement.innerHTML = 'Testing connection...';
+            resultElement.innerHTML = 'Running tests...';
+            
+            try {
+                const result = await testFirebaseConnection();
+                
+                if (result.success) {
+                    statusElement.innerHTML = `
+                        <div class="success">
+                            <strong>Connection successful!</strong>
+                        </div>
+                    `;
+                    resultElement.innerHTML = JSON.stringify(result, null, 2);
+                } else {
+                    statusElement.innerHTML = `
+                        <div class="error">
+                            <strong>Connection failed!</strong>
+                        </div>
+                    `;
+                    resultElement.innerHTML = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error testing connection!</strong>
+                    </div>
+                `;
+                resultElement.innerHTML = JSON.stringify({
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                }, null, 2);
+            }
+        }
+
+        async function initDb() {
+            const statusElement = document.getElementById('db-status');
+            const resultElement = document.getElementById('db-result');
+            
+            statusElement.innerHTML = 'Initializing database...';
+            resultElement.innerHTML = 'Running initialization...';
+            
+            try {
+                const result = await initializeDatabase();
+                
+                if (result.success) {
+                    statusElement.innerHTML = `
+                        <div class="success">
+                            <strong>Database initialized successfully!</strong>
+                        </div>
+                    `;
+                    resultElement.innerHTML = JSON.stringify(result, null, 2);
+                } else {
+                    statusElement.innerHTML = `
+                        <div class="error">
+                            <strong>Database initialization failed!</strong>
+                        </div>
+                    `;
+                    resultElement.innerHTML = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                statusElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error initializing database!</strong>
+                    </div>
+                `;
+                resultElement.innerHTML = JSON.stringify({
+                    success: false,
+                    error: error.message,
+                    stack: error.stack
+                }, null, 2);
+            }
+        }
+    </script>
+</body>
+</html>

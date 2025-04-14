@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication | TradeSkills</title>
+    <meta name="description" content="Test page for TradeSkills authentication.">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <header class="nav-bar" id="main-header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">TradeSkills</a>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="marketplace.html">Marketplace</a>
+                <a href="how-it-works.html">How It Works</a>
+                <a href="about.html">About</a>
+                <a href="test-auth.html" class="active">Test Auth</a>
+            </nav>
+            <div class="auth-buttons" id="auth-buttons">
+                <button id="login-button" class="btn-login">Login</button>
+                <button id="register-button" class="btn-register">Register</button>
+            </div>
+            <button id="mobile-menu-toggle" aria-label="Toggle navigation menu" class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-content" class="main-content">
+        <div class="test-container">
+            <h1>Authentication Test Page</h1>
+            <p>Use this page to test the authentication functionality of TradeSkills.</p>
+
+            <div class="test-section">
+                <h2>Current Authentication State</h2>
+                <div id="auth-state">Checking authentication state...</div>
+                <div class="test-buttons">
+                    <button id="check-auth-button" class="btn-primary">Refresh Auth State</button>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>Email/Password Authentication</h2>
+                <form id="email-auth-form">
+                    <div class="form-group">
+                        <label for="test-email">Email</label>
+                        <input type="email" id="test-email" value="test@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="test-password">Password</label>
+                        <input type="password" id="test-password" value="password123" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="test-name">Display Name (for registration)</label>
+                        <input type="text" id="test-name" value="Test User" required>
+                    </div>
+                    <div class="test-buttons">
+                        <button type="button" id="test-register-button" class="btn-primary">Register</button>
+                        <button type="button" id="test-login-button" class="btn-primary">Login</button>
+                        <button type="button" id="test-logout-button" class="btn-secondary">Logout</button>
+                    </div>
+                </form>
+                <div id="email-auth-result" class="test-result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Google Authentication</h2>
+                <div class="test-buttons">
+                    <button id="test-google-button" class="btn-primary">Login with Google</button>
+                </div>
+                <div id="google-auth-result" class="test-result"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Password Reset</h2>
+                <form id="reset-form">
+                    <div class="form-group">
+                        <label for="reset-test-email">Email</label>
+                        <input type="email" id="reset-test-email" value="test@example.com" required>
+                    </div>
+                    <div class="test-buttons">
+                        <button type="button" id="test-reset-button" class="btn-primary">Send Reset Email</button>
+                    </div>
+                </form>
+                <div id="reset-result" class="test-result"></div>
+            </div>
+        </div>
+
+        <!-- Loading spinner for async operations -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Error display -->
+        <div class="error-display" id="error-display"></div>
+    </main>
+
+    <footer class="footer" id="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TradeSkills</h3>
+                    <p>Exchange goods and services without cash. Join our bartering community today!</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="marketplace.html">Marketplace</a></li>
+                        <li><a href="how-it-works.html">How It Works</a></li>
+                        <li><a href="about.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p>Email: support@tradeskills.com</p>
+                    <p>Phone: (555) 123-4567</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <a href="https://www.buymeacoffee.com/rorrimaesu" target="_blank">
+                        <img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="Buy Me A Coffee" class="buymeacoffee-img">
+                    </a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TradeSkills. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <span class="close-button">&times;</span>
+            <div class="modal-tabs">
+                <button class="tab-button active" id="login-tab">Login</button>
+                <button class="tab-button" id="register-tab">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <h2>Login to Your Account</h2>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Login</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-login-button" class="btn-google">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Login with Google
+                    </button>
+                </div>
+                <div class="form-links">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+                <div id="login-error" class="error-message"></div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" style="display: none;">
+                <h2>Create an Account</h2>
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Register</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-register-button" class="btn-google">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Register with Google
+                    </button>
+                </div>
+                <div id="register-error" class="error-message"></div>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="auth-form" style="display: none;">
+                <h2>Reset Your Password</h2>
+                <div class="form-group">
+                    <label for="reset-email">Email</label>
+                    <input type="email" id="reset-email" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Reset Password</button>
+                </div>
+                <div class="form-links">
+                    <a href="#" id="back-to-login-link">Back to Login</a>
+                </div>
+                <div id="reset-message" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="scripts/main.js" type="module"></script>
+    <script type="module">
+        import { auth, onAuthStateChanged } from './scripts/firebase-config.js';
+        import * as authModule from './scripts/auth.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication state
+            onAuthStateChanged(auth, updateAuthState);
+
+            // Set up event listeners for test buttons
+            document.getElementById('check-auth-button').addEventListener('click', checkAuthState);
+            document.getElementById('test-register-button').addEventListener('click', testRegister);
+            document.getElementById('test-login-button').addEventListener('click', testLogin);
+            document.getElementById('test-logout-button').addEventListener('click', testLogout);
+            document.getElementById('test-google-button').addEventListener('click', testGoogleLogin);
+            document.getElementById('test-reset-button').addEventListener('click', testResetPassword);
+        });
+
+        function updateAuthState(user) {
+            const authStateElement = document.getElementById('auth-state');
+            
+            if (user) {
+                authStateElement.innerHTML = `
+                    <div class="success">
+                        <strong>User is authenticated</strong><br>
+                        UID: ${user.uid}<br>
+                        Email: ${user.email}<br>
+                        Display Name: ${user.displayName || 'Not set'}<br>
+                        Email Verified: ${user.emailVerified ? 'Yes' : 'No'}<br>
+                        Photo URL: ${user.photoURL || 'Not set'}<br>
+                    </div>
+                `;
+            } else {
+                authStateElement.innerHTML = `
+                    <div class="error">
+                        <strong>User is not authenticated</strong>
+                    </div>
+                `;
+            }
+        }
+
+        function checkAuthState() {
+            const user = auth.currentUser;
+            updateAuthState(user);
+        }
+
+        async function testRegister() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            const displayName = document.getElementById('test-name').value;
+            const resultElement = document.getElementById('email-auth-result');
+
+            resultElement.innerHTML = 'Registering user...';
+            
+            try {
+                const result = await authModule.registerUser(email, password, displayName);
+                
+                if (result.success) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            <strong>Registration successful!</strong><br>
+                            UID: ${result.user.uid}<br>
+                            Email: ${result.user.email}<br>
+                            Display Name: ${result.user.displayName || 'Not set'}<br>
+                        </div>
+                    `;
+                    checkAuthState();
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            <strong>Registration failed:</strong><br>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            const resultElement = document.getElementById('email-auth-result');
+
+            resultElement.innerHTML = 'Logging in...';
+            
+            try {
+                const result = await authModule.loginUser(email, password);
+                
+                if (result.success) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            <strong>Login successful!</strong><br>
+                            UID: ${result.user.uid}<br>
+                            Email: ${result.user.email}<br>
+                            Display Name: ${result.user.displayName || 'Not set'}<br>
+                        </div>
+                    `;
+                    checkAuthState();
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            <strong>Login failed:</strong><br>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogout() {
+            const resultElement = document.getElementById('email-auth-result');
+
+            resultElement.innerHTML = 'Logging out...';
+            
+            try {
+                const result = await authModule.logoutUser();
+                
+                if (result.success) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            <strong>Logout successful!</strong>
+                        </div>
+                    `;
+                    checkAuthState();
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            <strong>Logout failed:</strong><br>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testGoogleLogin() {
+            const resultElement = document.getElementById('google-auth-result');
+
+            resultElement.innerHTML = 'Logging in with Google...';
+            
+            try {
+                const result = await authModule.loginWithGoogle();
+                
+                if (result.success) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            <strong>Google login successful!</strong><br>
+                            UID: ${result.user.uid}<br>
+                            Email: ${result.user.email}<br>
+                            Display Name: ${result.user.displayName || 'Not set'}<br>
+                        </div>
+                    `;
+                    checkAuthState();
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            <strong>Google login failed:</strong><br>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testResetPassword() {
+            const email = document.getElementById('reset-test-email').value;
+            const resultElement = document.getElementById('reset-result');
+
+            resultElement.innerHTML = 'Sending password reset email...';
+            
+            try {
+                const result = await authModule.resetPassword(email);
+                
+                if (result.success) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            <strong>Password reset email sent!</strong><br>
+                            ${result.message}
+                        </div>
+                    `;
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            <strong>Failed to send password reset email:</strong><br>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
