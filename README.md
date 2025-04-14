@@ -1,4 +1,7 @@
-<div align="center" style="background-color: white; padding: 20px; border-radius: 10px;">
+<div align="center">
+  <img src="https://github.com/RorriMaesu/TradeSkills/assets/placeholder/white_background.png" width="100%" height="auto" style="background-color:white" alt="">
+  
+  <div style="background-color: white; color: black; padding: 20px; border-radius: 10px;">
 
 # TradeSkills
 
@@ -6,7 +9,12 @@ A platform for listing, trading, and exchanging skills and services.
 
 <img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="TradeSkills Logo" width="150px"/>
 
+  </div>
 </div>
+
+<table width="100%" bgcolor="white" style="background-color: white; color: black;">
+<tr>
+<td>
 
 ## Description
 
@@ -23,7 +31,7 @@ TradeSkills is a web application that allows users to list their skills, service
 
 ## Technologies Used
 
-<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+<div>
 <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
 <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
 <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
@@ -63,3 +71,7 @@ If you find this project helpful or valuable, you can support me by clicking on 
   <img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="Buy Me A Coffee" width="200px" style="border-radius: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 </a>
 </div>
+
+</td>
+</tr>
+</table>
