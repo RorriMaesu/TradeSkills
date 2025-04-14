@@ -11,7 +11,7 @@ import {
     signInWithPopup,
     doc
 } from './firebase-config.js';
-import { setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { setDoc } from './firebase-helpers.js';
 
 // Import database functions
 import { createUserProfile } from './init-database.js';
