@@ -121,15 +121,35 @@ function setupEventListeners() {
 
 // Handle changes in authentication state
 function handleAuthStateChanged(user) {
+    const wasLoggedIn = !!appState.currentUser;
+    const isNowLoggedIn = !!user;
+
+    // Update the current user in app state
     appState.currentUser = user;
 
     // Update UI based on authentication state
     if (user) {
         // User is signed in
         showAuthenticatedUI();
+
+        // If this is a new login (not just a page refresh while logged in)
+        if (!wasLoggedIn && isNowLoggedIn) {
+            console.log('User newly logged in, redirecting to dashboard');
+            // Redirect to dashboard after login
+            navigateTo('/dashboard');
+            return; // Skip handleRouting() as navigateTo will call it
+        }
     } else {
         // User is signed out
         showUnauthenticatedUI();
+
+        // If user just logged out (not just a page refresh while logged out)
+        if (wasLoggedIn && !isNowLoggedIn) {
+            console.log('User logged out, redirecting to home');
+            // Redirect to home page after logout
+            navigateTo('/');
+            return; // Skip handleRouting() as navigateTo will call it
+        }
     }
 
     // Re-render the current page
@@ -1052,12 +1072,25 @@ async function showDashboardSection() {
     setLoading(true);
 
     try {
+        console.log('Loading dashboard for user:', appState.currentUser.uid);
+
         // Fetch user's listings
         const listingsResult = await listingsModule.getListings({ userId: appState.currentUser.uid });
+        console.log('Listings result:', listingsResult);
 
-        // Fetch user's trade proposals
-        const sentTradesResult = await tradesModule.getTradeProposals({ role: 'proposer' });
-        const receivedTradesResult = await tradesModule.getTradeProposals({ role: 'receiver' });
+        // Initialize trade results with default values
+        let sentTradesResult = { success: true, trades: [] };
+        let receivedTradesResult = { success: true, trades: [] };
+
+        try {
+            // Fetch user's trade proposals
+            sentTradesResult = await tradesModule.getTradeProposals({ role: 'proposer' });
+            receivedTradesResult = await tradesModule.getTradeProposals({ role: 'receiver' });
+            console.log('Trade proposals loaded successfully');
+        } catch (tradeError) {
+            console.error('Error loading trade proposals:', tradeError);
+            // Continue with empty trade arrays
+        }
 
         // Display dashboard
         if (elements.mainContent) {
