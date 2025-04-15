@@ -1074,9 +1074,15 @@ async function showDashboardSection() {
     try {
         console.log('Loading dashboard for user:', appState.currentUser.uid);
 
-        // Fetch user's listings
-        const listingsResult = await listingsModule.getListings({ userId: appState.currentUser.uid });
-        console.log('Listings result:', listingsResult);
+        // Fetch user's listings with error handling
+        let listingsResult = { success: true, listings: [] };
+        try {
+            listingsResult = await listingsModule.getListings({ userId: appState.currentUser.uid });
+            console.log('Listings loaded successfully');
+        } catch (listingError) {
+            console.error('Error loading listings:', listingError);
+            // Continue with empty listings array
+        }
 
         // Initialize trade results with default values
         let sentTradesResult = { success: true, trades: [] };
