@@ -1058,7 +1058,7 @@ async function loadMarketplaceListings() {
                         }
                         <div class="marketplace-card-content">
                             <h3>${listing.title}</h3>
-                            <p>${listing.description.substring(0, 100)}${listing.description.length > 100 ? '...' : ''}</p>
+                            <p>${listing.description ? listing.description.substring(0, 100) + (listing.description.length > 100 ? '...' : '') : 'No description provided'}</p>
                             <p><strong>Looking for:</strong> ${listing.lookingFor || 'Not specified'}</p>
                         </div>
                         <div class="marketplace-card-footer">
@@ -1140,11 +1140,11 @@ async function showListingDetailSection() {
                                     </div>
                                     <div class="listing-description">
                                         <h2>Description</h2>
-                                        <p>${listing.description}</p>
+                                        <p>${listing.description || 'No description provided'}</p>
                                     </div>
                                     <div class="listing-looking-for">
                                         <h2>Looking For</h2>
-                                        <p>${listing.lookingFor}</p>
+                                        <p>${listing.lookingFor || 'Not specified'}</p>
                                     </div>
                                     <div class="listing-actions">
                                         ${isOwner ? `
@@ -1565,7 +1565,7 @@ async function showDashboardSection() {
                                             }
                                             <div class="listing-details">
                                                 <h3>${listing.title}</h3>
-                                                <p>${listing.description.substring(0, 50)}${listing.description.length > 50 ? '...' : ''}</p>
+                                                <p>${listing.description ? listing.description.substring(0, 50) + (listing.description.length > 50 ? '...' : '') : 'No description provided'}</p>
                                                 <span class="status-badge status-${listing.status}">${listing.status}</span>
                                             </div>
                                             <div class="listing-actions">
