@@ -3,6 +3,8 @@ import { auth, onAuthStateChanged, db, collection, query, where, getDocs } from 
 import * as authModule from './auth.js';
 import * as listingsModule from './listings.js';
 import * as tradesModule from './trades.js';
+import * as messagesModule from './messages.js';
+import * as forumsModule from './forums.js';
 
 // App state to store current user and application state
 const appState = {
@@ -117,6 +119,36 @@ function setupEventListeners() {
     if (logoutButton) {
         logoutButton.addEventListener('click', handleLogout);
     }
+
+    // Add event listeners for marketplace view buttons in static HTML
+    document.querySelectorAll('.view-listing-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const listingId = button.dataset.id;
+            navigateTo(`/listing?id=${listingId}`);
+        });
+    });
+
+    // Add event listeners for category icons in marketplace
+    document.querySelectorAll('.category-icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+            const category = icon.dataset.category;
+            if (category) {
+                // Remove active class from all icons
+                document.querySelectorAll('.category-icon').forEach(i => i.classList.remove('active'));
+                // Add active class to clicked icon
+                icon.classList.add('active');
+
+                // Set the category filter dropdown to the selected category
+                const categoryFilter = document.getElementById('category-filter');
+                if (categoryFilter) {
+                    categoryFilter.value = category;
+                    // Trigger the change event to apply the filter
+                    const event = new Event('change');
+                    categoryFilter.dispatchEvent(event);
+                }
+            }
+        });
+    });
 }
 
 // Handle changes in authentication state
@@ -181,6 +213,8 @@ function showAuthenticatedUI() {
             <a href="/" data-link>Home</a>
             <a href="/dashboard" data-link>Dashboard</a>
             <a href="/marketplace" data-link>Marketplace</a>
+            <a href="/messages" data-link>Messages</a>
+            <a href="/forums" data-link>Forums</a>
             <a href="/profile" data-link>Profile</a>
         `;
 
@@ -222,6 +256,7 @@ function showUnauthenticatedUI() {
         elements.navLinks.innerHTML = `
             <a href="/" data-link>Home</a>
             <a href="/marketplace" data-link>Marketplace</a>
+            <a href="/forums" data-link>Forums</a>
         `;
 
         // Reconnect navigation event listeners
@@ -494,7 +529,7 @@ function handleRouting() {
 
     // Check if user is authenticated for protected routes
     const isAuthenticated = !!appState.currentUser;
-    const protectedRoutes = ['/dashboard', '/profile', '/create-listing'];
+    const protectedRoutes = ['/dashboard', '/profile', '/create-listing', '/messages'];
 
     if (protectedRoutes.includes(path) && !isAuthenticated) {
         // Redirect to home if trying to access protected route while not logged in
@@ -518,11 +553,26 @@ function handleRouting() {
         case '/listing':
             showListingDetailSection();
             break;
+        case '/trade':
+            showTradeDetailSection();
+            break;
         case '/create-listing':
             showCreateListingSection();
             break;
         case '/profile':
             showProfileSection();
+            break;
+        case '/messages':
+            showMessagesSection();
+            break;
+        case '/forums':
+            showForumsSection();
+            break;
+        case '/forum-category':
+            showForumCategorySection();
+            break;
+        case '/forum-post':
+            showForumPostSection();
             break;
         case '/about':
             navigateTo('/about.html');
@@ -741,6 +791,16 @@ function showMarketplaceSection() {
 
         if (categoryFilter) {
             categoryFilter.addEventListener('change', () => {
+                // Update category icon active state
+                const selectedCategory = categoryFilter.value;
+                document.querySelectorAll('.category-icon').forEach(icon => {
+                    if (icon.dataset.category === selectedCategory) {
+                        icon.classList.add('active');
+                    } else {
+                        icon.classList.remove('active');
+                    }
+                });
+
                 applyFiltersAndSearch();
             });
         }
@@ -1094,6 +1154,166 @@ async function loadMarketplaceListings() {
     }
 }
 
+// Show trade proposal modal
+async function showTradeProposalModal(requestedListingId) {
+    try {
+        setLoading(true);
+
+        // Get the requested listing details
+        const requestedListingResult = await listingsModule.getListing(requestedListingId);
+        if (!requestedListingResult.success) {
+            showError(requestedListingResult.error);
+            return;
+        }
+
+        const requestedListing = requestedListingResult.listing;
+
+        // Get the current user's listings
+        const userListingsResult = await listingsModule.getListings({
+            userId: appState.currentUser.uid,
+            status: 'active'
+        });
+
+        // Get the modal elements
+        const modal = document.getElementById('trade-proposal-modal');
+        const closeButton = modal.querySelector('.close-button');
+        const cancelButton = document.getElementById('cancel-trade-button');
+        const proposeButton = document.getElementById('propose-trade-button');
+        const requestedListingContainer = document.getElementById('requested-listing');
+        const myListingsContainer = document.getElementById('my-listings-selection');
+        const tradeMessage = document.getElementById('trade-message');
+        const errorMessage = document.getElementById('trade-proposal-error');
+
+        // Display the requested listing
+        requestedListingContainer.innerHTML = `
+            <div class="listing-preview">
+                ${requestedListing.isFirestoreImage && requestedListing.imageId ?
+                    `<img src="${requestedListing.thumbnailUrl || './assets/images/placeholder.png'}" alt="${requestedListing.title}" class="firestore-image" data-image-id="${requestedListing.imageId}" data-firestore-id="${requestedListing.firestoreId}">` :
+                    requestedListing.isLocalImage && requestedListing.imageId ?
+                    `<img src="${requestedListing.imageUrl}" alt="${requestedListing.title}" class="local-image" data-image-id="${requestedListing.imageId}">` :
+                    `<img src="${requestedListing.imageUrl || './assets/images/placeholder.png'}" alt="${requestedListing.title}">`
+                }
+                <div class="listing-preview-details">
+                    <h4>${requestedListing.title}</h4>
+                    <p>${requestedListing.description ? requestedListing.description.substring(0, 100) + (requestedListing.description.length > 100 ? '...' : '') : 'No description provided'}</p>
+                    <p><strong>Owner:</strong> ${requestedListing.userName}</p>
+                </div>
+            </div>
+        `;
+
+        // Display the user's listings
+        if (userListingsResult.success && userListingsResult.listings.length > 0) {
+            myListingsContainer.innerHTML = userListingsResult.listings.map(listing => `
+                <div class="listing-preview selectable" data-id="${listing.id}">
+                    ${listing.isFirestoreImage && listing.imageId ?
+                        `<img src="${listing.thumbnailUrl || './assets/images/placeholder.png'}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                        listing.isLocalImage && listing.imageId ?
+                        `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
+                        `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
+                    }
+                    <div class="listing-preview-details">
+                        <h4>${listing.title}</h4>
+                        <p>${listing.description ? listing.description.substring(0, 50) + (listing.description.length > 50 ? '...' : '') : 'No description provided'}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add selection functionality
+            const listingPreviews = myListingsContainer.querySelectorAll('.listing-preview');
+            listingPreviews.forEach(preview => {
+                preview.addEventListener('click', () => {
+                    // Remove selected class from all listings
+                    listingPreviews.forEach(p => p.classList.remove('selected'));
+                    // Add selected class to clicked listing
+                    preview.classList.add('selected');
+                    // Enable the propose button
+                    proposeButton.disabled = false;
+                });
+            });
+        } else {
+            myListingsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>You don't have any active listings to offer.</p>
+                    <a href="/create-listing" data-link class="btn-primary">Create a Listing</a>
+                </div>
+            `;
+            // Reconnect navigation event listeners
+            document.querySelectorAll('a[data-link]').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    modal.style.display = 'none';
+                    navigateTo(href);
+                });
+            });
+        }
+
+        // Clear any previous message and error
+        tradeMessage.value = '';
+        errorMessage.textContent = '';
+
+        // Show the modal
+        modal.style.display = 'block';
+
+        // Add event listeners
+        closeButton.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        cancelButton.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        // Handle clicking outside the modal
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Handle propose button click
+        proposeButton.onclick = async () => {
+            const selectedListing = myListingsContainer.querySelector('.listing-preview.selected');
+            if (!selectedListing) {
+                errorMessage.textContent = 'Please select a listing to offer';
+                return;
+            }
+
+            const offeredListingId = selectedListing.dataset.id;
+            const message = tradeMessage.value.trim();
+
+            try {
+                setLoading(true);
+                errorMessage.textContent = '';
+
+                const result = await tradesModule.proposeTradeOffer(
+                    requestedListing.userId,
+                    offeredListingId,
+                    requestedListingId,
+                    message
+                );
+
+                if (result.success) {
+                    modal.style.display = 'none';
+                    showMessage('Trade proposal sent successfully!');
+                    // Navigate to the dashboard
+                    navigateTo('/dashboard');
+                } else {
+                    errorMessage.textContent = result.error;
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error proposing trade: ' + error.message;
+            } finally {
+                setLoading(false);
+            }
+        };
+    } catch (error) {
+        showError('Error preparing trade proposal: ' + error.message);
+    } finally {
+        setLoading(false);
+    }
+}
+
 // Show listing detail section
 async function showListingDetailSection() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1199,7 +1419,7 @@ async function showListingDetailSection() {
                         proposeTradeButton.addEventListener('click', () => {
                             if (appState.currentUser) {
                                 // Show trade proposal modal or navigate to trade page
-                                showMessage('Trade proposal feature coming soon!');
+                                showTradeProposalModal(listingId);
                             } else {
                                 showAuthModal('login');
                             }
@@ -1420,6 +1640,62 @@ function showCreateListingSection() {
     }
 }
 
+// Show messages section
+async function showMessagesSection() {
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Redirect to the messages.html page with the correct path
+    window.location.href = `${repoPath}/messages.html`;
+}
+
+// Show forums section
+async function showForumsSection() {
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Redirect to the forums.html page with the correct path
+    window.location.href = `${repoPath}/forums.html`;
+}
+
+// Show forum category section
+async function showForumCategorySection() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('id');
+
+    if (!categoryId) {
+        navigateTo('/forums');
+        return;
+    }
+
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Redirect to the forum-category.html page with the category ID
+    window.location.href = `${repoPath}/forum-category.html?id=${categoryId}`;
+}
+
+// Show forum post section
+async function showForumPostSection() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    if (!postId) {
+        navigateTo('/forums');
+        return;
+    }
+
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Redirect to the forum-post.html page with the post ID
+    window.location.href = `${repoPath}/forum-post.html?id=${postId}`;
+}
+
 // Show profile section
 function showProfileSection() {
     if (!appState.currentUser) {
@@ -1638,6 +1914,255 @@ async function showDashboardSection() {
         }
     } catch (error) {
         showError('Error loading dashboard: ' + error.message);
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Show trade detail section
+async function showTradeDetailSection() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tradeId = urlParams.get('id');
+
+    if (!tradeId) {
+        navigateTo('/dashboard');
+        return;
+    }
+
+    if (!appState.currentUser) {
+        navigateTo('/');
+        showAuthModal('login');
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        const result = await tradesModule.getTrade(tradeId);
+
+        if (result.success) {
+            const { trade } = result;
+            const isProposer = trade.proposerId === appState.currentUser.uid;
+            const otherPartyName = isProposer ? trade.receiverName : trade.proposerName;
+
+            if (elements.mainContent) {
+                elements.mainContent.innerHTML = `
+                    <section id="trade-detail-section" class="section section-trade-detail">
+                        <div class="container">
+                            <h1>Trade Details</h1>
+                            <div class="trade-status">
+                                <span class="status-badge status-${trade.status}">${trade.status}</span>
+                                <p>Created on ${new Date(trade.createdAt?.seconds * 1000).toLocaleDateString()}</p>
+                                ${trade.completedAt ? `<p>Completed on ${new Date(trade.completedAt?.seconds * 1000).toLocaleDateString()}</p>` : ''}
+                            </div>
+
+                            <div class="trade-items">
+                                <div class="trade-item">
+                                    <h3>${isProposer ? 'You Offered' : 'They Offered'}</h3>
+                                    <div class="listing-preview">
+                                        <img src="${trade.offeredListingImage || './assets/images/placeholder.png'}" alt="${trade.offeredListingTitle}">
+                                        <div class="listing-preview-details">
+                                            <h4>${trade.offeredListingTitle}</h4>
+                                            <p><strong>Owner:</strong> ${isProposer ? 'You' : otherPartyName}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="trade-item">
+                                    <h3>${isProposer ? 'You Requested' : 'They Requested'}</h3>
+                                    <div class="listing-preview">
+                                        <img src="${trade.requestedListingImage || './assets/images/placeholder.png'}" alt="${trade.requestedListingTitle}">
+                                        <div class="listing-preview-details">
+                                            <h4>${trade.requestedListingTitle}</h4>
+                                            <p><strong>Owner:</strong> ${isProposer ? otherPartyName : 'You'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="trade-messages">
+                                <h3>Messages</h3>
+                                <div class="messages-container" id="messages-container">
+                                    ${trade.message ? `
+                                        <div class="message ${isProposer ? 'sent' : 'received'}">
+                                            <div class="message-header">
+                                                <span class="message-sender">${isProposer ? 'You' : otherPartyName}</span>
+                                                <span class="message-time">${new Date(trade.createdAt?.seconds * 1000).toLocaleString()}</span>
+                                            </div>
+                                            <div class="message-body">${trade.message}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${trade.messages && trade.messages.length > 0 ?
+                                        trade.messages.map(msg => `
+                                            <div class="message ${msg.senderRole === 'proposer' ? (isProposer ? 'sent' : 'received') : (isProposer ? 'received' : 'sent')}">
+                                                <div class="message-header">
+                                                    <span class="message-sender">${msg.senderRole === 'proposer' ? (isProposer ? 'You' : trade.proposerName) : (isProposer ? trade.receiverName : 'You')}</span>
+                                                    <span class="message-time">${new Date(msg.timestamp?.seconds * 1000).toLocaleString()}</span>
+                                                </div>
+                                                <div class="message-body">${msg.text}</div>
+                                            </div>
+                                        `).join('') :
+                                        '<p class="empty-state">No messages yet.</p>'
+                                    }
+                                </div>
+
+                                ${trade.status === 'pending' || trade.status === 'accepted' ? `
+                                    <div class="message-form">
+                                        <textarea id="message-input" placeholder="Type your message here..."></textarea>
+                                        <button id="send-message-button" class="btn-primary">Send Message</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="trade-actions">
+                                <a href="/dashboard" data-link class="btn-secondary">Back to Dashboard</a>
+                                ${trade.status === 'pending' && !isProposer ? `
+                                    <button id="accept-trade-button" class="btn-primary">Accept Trade</button>
+                                    <button id="decline-trade-button" class="btn-secondary">Decline Trade</button>
+                                ` : ''}
+                                ${trade.status === 'pending' && isProposer ? `
+                                    <button id="cancel-trade-button" class="btn-secondary">Cancel Trade</button>
+                                ` : ''}
+                                ${trade.status === 'accepted' ? `
+                                    <button id="complete-trade-button" class="btn-primary">Mark as Completed</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </section>
+                `;
+
+                // Add event listeners
+                const sendMessageButton = document.getElementById('send-message-button');
+                const messageInput = document.getElementById('message-input');
+
+                if (sendMessageButton && messageInput) {
+                    sendMessageButton.addEventListener('click', async () => {
+                        const message = messageInput.value.trim();
+                        if (!message) {
+                            return;
+                        }
+
+                        try {
+                            setLoading(true);
+                            const result = await tradesModule.addTradeMessage(tradeId, message);
+
+                            if (result.success) {
+                                // Refresh the trade detail view
+                                showTradeDetailSection();
+                            } else {
+                                showError(result.error);
+                            }
+                        } catch (error) {
+                            showError('Error sending message: ' + error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    });
+                }
+
+                // Accept trade button
+                const acceptTradeButton = document.getElementById('accept-trade-button');
+                if (acceptTradeButton) {
+                    acceptTradeButton.addEventListener('click', async () => {
+                        try {
+                            setLoading(true);
+                            const result = await tradesModule.updateTradeStatus(tradeId, 'accepted', 'I accept this trade proposal.');
+
+                            if (result.success) {
+                                showMessage('Trade accepted successfully');
+                                showTradeDetailSection(); // Refresh the view
+                            } else {
+                                showError(result.error);
+                            }
+                        } catch (error) {
+                            showError('Error accepting trade: ' + error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    });
+                }
+
+                // Decline trade button
+                const declineTradeButton = document.getElementById('decline-trade-button');
+                if (declineTradeButton) {
+                    declineTradeButton.addEventListener('click', async () => {
+                        try {
+                            setLoading(true);
+                            const result = await tradesModule.updateTradeStatus(tradeId, 'declined', 'I decline this trade proposal.');
+
+                            if (result.success) {
+                                showMessage('Trade declined successfully');
+                                navigateTo('/dashboard');
+                            } else {
+                                showError(result.error);
+                            }
+                        } catch (error) {
+                            showError('Error declining trade: ' + error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    });
+                }
+
+                // Cancel trade button
+                const cancelTradeButton = document.getElementById('cancel-trade-button');
+                if (cancelTradeButton) {
+                    cancelTradeButton.addEventListener('click', async () => {
+                        try {
+                            setLoading(true);
+                            const result = await tradesModule.updateTradeStatus(tradeId, 'cancelled', 'I cancelled this trade proposal.');
+
+                            if (result.success) {
+                                showMessage('Trade cancelled successfully');
+                                navigateTo('/dashboard');
+                            } else {
+                                showError(result.error);
+                            }
+                        } catch (error) {
+                            showError('Error cancelling trade: ' + error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    });
+                }
+
+                // Complete trade button
+                const completeTradeButton = document.getElementById('complete-trade-button');
+                if (completeTradeButton) {
+                    completeTradeButton.addEventListener('click', async () => {
+                        try {
+                            setLoading(true);
+                            const result = await tradesModule.updateTradeStatus(tradeId, 'completed', 'I have completed this trade.');
+
+                            if (result.success) {
+                                showMessage('Trade marked as completed successfully');
+                                showTradeDetailSection(); // Refresh the view
+                            } else {
+                                showError(result.error);
+                            }
+                        } catch (error) {
+                            showError('Error completing trade: ' + error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    });
+                }
+
+                // Reconnect navigation event listeners
+                document.querySelectorAll('a[data-link]').forEach(link => {
+                    link.addEventListener('click', e => {
+                        e.preventDefault();
+                        const href = link.getAttribute('href');
+                        navigateTo(href);
+                    });
+                });
+            }
+        } else {
+            showError(result.error);
+            navigateTo('/dashboard');
+        }
+    } catch (error) {
+        showError('Error loading trade: ' + error.message);
     } finally {
         setLoading(false);
     }
