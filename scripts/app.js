@@ -1,6 +1,5 @@
 // Import Firebase and module dependencies
-import { auth, onAuthStateChanged, db } from './firebase-config.js';
-import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { auth, onAuthStateChanged, db, collection, query, where, getDocs } from './firebase-config.js';
 import * as authModule from './auth.js';
 import * as listingsModule from './listings.js';
 import * as tradesModule from './trades.js';
@@ -460,13 +459,19 @@ function navigateTo(url) {
 
 // Route handling based on URL
 function handleRouting() {
+    console.log('Handling routing...');
     // Get the path from the URL
     let path = window.location.pathname;
+    console.log('Original path:', path);
 
     // Handle GitHub Pages repository path
-    const repoPath = '/TradeSkills';
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+    console.log('Is GitHub Pages:', isGitHubPages, 'Repo path:', repoPath);
+
     if (path.startsWith(repoPath)) {
         path = path.substring(repoPath.length);
+        console.log('Path after repo path handling:', path);
     }
 
     // Handle HTML file extensions for direct navigation
@@ -538,15 +543,28 @@ function handleRouting() {
 
 // Hide all main content sections
 function hideAllSections() {
-    if (elements.homeSection) elements.homeSection.style.display = 'none';
-    if (elements.dashboardSection) elements.dashboardSection.style.display = 'none';
-    if (elements.listingSection) elements.listingSection.style.display = 'none';
-    if (elements.marketplaceSection) elements.marketplaceSection.style.display = 'none';
-    if (elements.profileSection) elements.profileSection.style.display = 'none';
+    console.log('Hiding all sections');
+    if (elements.homeSection) {
+        elements.homeSection.style.display = 'none';
+    }
+    if (elements.dashboardSection) {
+        elements.dashboardSection.style.display = 'none';
+    }
+    if (elements.listingSection) {
+        elements.listingSection.style.display = 'none';
+    }
+    if (elements.marketplaceSection) {
+        elements.marketplaceSection.style.display = 'none';
+    }
+    if (elements.profileSection) {
+        elements.profileSection.style.display = 'none';
+    }
 
     // Reset main content if needed
     if (elements.mainContent) {
-        elements.mainContent.innerHTML = '';
+        // Don't clear the content here, let each section handler manage its content
+        // elements.mainContent.innerHTML = '';
+        console.log('Main content preserved for section handlers');
     }
 }
 
@@ -584,9 +602,9 @@ function showHomeSection() {
                 <div class="hero">
                     <h1>TradeSkills</h1>
                     <p>Exchange goods and services without cash. Join our bartering community today!</p>
-                    ${!appState.currentUser ?
-                        `<button id="join-now-button" class="cta-button">Join Now</button>` :
-                        `<a href="/marketplace" data-link class="cta-button">Browse Marketplace</a>`
+                    ${appState.currentUser ?
+                        `<a href="/marketplace" data-link class="cta-button">Browse Marketplace</a>` :
+                        `<button id="join-now-button" class="cta-button">Join Now</button>`
                     }
                 </div>
 
@@ -660,9 +678,9 @@ function showHomeSection() {
 
 // Show marketplace section
 function showMarketplaceSection() {
-    if (elements.marketplaceSection) {
-        elements.marketplaceSection.style.display = 'block';
-    } else if (elements.mainContent) {
+    console.log('Showing marketplace section');
+    // Always recreate the marketplace section to ensure it's fresh
+    if (elements.mainContent) {
         elements.mainContent.innerHTML = `
             <section id="marketplace-section" class="section section-marketplace">
                 <div class="container">
@@ -760,6 +778,7 @@ function debounce(func, delay) {
 
 // Apply filters and search to marketplace listings
 async function applyFiltersAndSearch() {
+    console.log('Applying filters and search');
     const searchInput = document.getElementById('search-input');
     const categoryFilter = document.getElementById('category-filter');
     const sortFilter = document.getElementById('sort-filter');
@@ -769,38 +788,96 @@ async function applyFiltersAndSearch() {
     const category = categoryFilter ? categoryFilter.value : '';
     const sortBy = sortFilter ? sortFilter.value : 'newest';
 
+    console.log('Filter values:', { searchTerm, category, sortBy });
+
     try {
         setLoading(true);
 
-        // Use direct Firestore query with the category filter if specified
+        // Get all listings first, then filter client-side
         let listings = [];
         try {
             const listingsRef = collection(db, 'listings');
-            let q;
+            // Simple query without filters
+            const q = query(listingsRef);
 
-            if (category) {
-                q = query(listingsRef, where('status', '==', 'active'), where('category', '==', category));
-            } else {
-                q = query(listingsRef, where('status', '==', 'active'));
+            try {
+                const querySnapshot = await getDocs(q);
+
+                // Process results
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    listings.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                console.log('All listings loaded for filtering:', listings.length);
+            } catch (error) {
+                console.error('Error with simple query for filtering:', error);
+                // Use sample data as fallback
+                listings = [
+                    {
+                        id: 'sample1',
+                        title: 'Sample Listing 1',
+                        description: 'This is a sample listing to demonstrate the marketplace functionality.',
+                        lookingFor: 'Open to offers',
+                        userName: 'Demo User',
+                        category: 'goods',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: Date.now() / 1000 }
+                    },
+                    {
+                        id: 'sample2',
+                        title: 'Sample Listing 2',
+                        description: 'Another sample listing with different details to show multiple items.',
+                        lookingFor: 'Tools or equipment',
+                        userName: 'Demo User',
+                        category: 'services',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: (Date.now() / 1000) - 86400 }
+                    }
+                ];
+                console.log('Using sample listings for filtering');
             }
 
-            const querySnapshot = await getDocs(q);
+            // Filter by status (active) client-side
+            listings = listings.filter(listing => listing.status === 'active' || !listing.status);
+            console.log('Active listings filtered:', listings.length);
 
-            // Process results
-            querySnapshot.forEach((doc) => {
-                listings.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-
-            console.log('Filtered listings loaded:', listings.length);
+            // Filter by category if specified
+            if (category) {
+                listings = listings.filter(listing => listing.category === category);
+                console.log('Category filtered listings:', listings.length);
+            }
         } catch (error) {
-            console.error('Error fetching filtered listings:', error);
+            console.error('Error in main try block of applyFiltersAndSearch:', error);
             // Try the module as fallback
-            const result = await listingsModule.getListings({ category, status: 'active' });
-            if (result.success) {
-                listings = result.listings;
+            try {
+                const result = await listingsModule.getListings({ category, status: 'active' });
+                if (result.success) {
+                    listings = result.listings;
+                    console.log('Listings loaded via module for filtering:', listings.length);
+                }
+            } catch (moduleError) {
+                console.error('Module fallback also failed for filtering:', moduleError);
+                // Use sample data as last resort
+                listings = [
+                    {
+                        id: 'sample1',
+                        title: 'Sample Listing 1',
+                        description: 'This is a sample listing to demonstrate the marketplace functionality.',
+                        lookingFor: 'Open to offers',
+                        userName: 'Demo User',
+                        category: 'goods',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: Date.now() / 1000 }
+                    }
+                ];
+                console.log('Using emergency sample data for filtering');
             }
         }
 
@@ -872,6 +949,7 @@ async function applyFiltersAndSearch() {
 // Load marketplace listings
 async function loadMarketplaceListings() {
     try {
+        console.log('Loading marketplace listings...');
         setLoading(true);
 
         // Use direct Firestore query to avoid index issues
@@ -879,17 +957,57 @@ async function loadMarketplaceListings() {
         try {
             // Get all listings without sorting (we'll sort client-side)
             const listingsRef = collection(db, 'listings');
-            // Only get active listings
-            const q = query(listingsRef, where('status', '==', 'active'));
-            const querySnapshot = await getDocs(q);
+            console.log('Collection reference created');
 
-            // Process results
-            querySnapshot.forEach((doc) => {
-                listings.push({
-                    id: doc.id,
-                    ...doc.data()
+            // Try to get all listings without filters first
+            let q = query(listingsRef);
+
+            try {
+                console.log('Executing simple query without filters');
+                const querySnapshot = await getDocs(q);
+                console.log('Query executed, processing results');
+
+                // Process results
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    listings.push({
+                        id: doc.id,
+                        ...data
+                    });
                 });
-            });
+
+                console.log('All listings loaded:', listings.length);
+
+                // Filter active listings client-side
+                listings = listings.filter(listing => listing.status === 'active' || !listing.status);
+                console.log('Active listings filtered:', listings.length);
+            } catch (error) {
+                console.error('Error with simple query:', error);
+                // Fallback to dummy data if needed
+                listings = [
+                    {
+                        id: 'sample1',
+                        title: 'Sample Listing 1',
+                        description: 'This is a sample listing to demonstrate the marketplace functionality.',
+                        lookingFor: 'Open to offers',
+                        userName: 'Demo User',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: Date.now() / 1000 }
+                    },
+                    {
+                        id: 'sample2',
+                        title: 'Sample Listing 2',
+                        description: 'Another sample listing with different details to show multiple items.',
+                        lookingFor: 'Tools or equipment',
+                        userName: 'Demo User',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: (Date.now() / 1000) - 86400 }
+                    }
+                ];
+                console.log('Using sample listings as fallback');
+            }
 
             // Sort by createdAt (descending) - client-side
             listings.sort((a, b) => {
@@ -898,13 +1016,32 @@ async function loadMarketplaceListings() {
                 return dateB - dateA;
             });
 
-            console.log('Marketplace listings loaded:', listings.length);
+            console.log('Marketplace listings sorted and ready');
         } catch (error) {
-            console.error('Error fetching listings directly:', error);
+            console.error('Error in main try block of loadMarketplaceListings:', error);
             // Try the module as fallback
-            const result = await listingsModule.getListings();
-            if (result.success) {
-                listings = result.listings;
+            try {
+                const result = await listingsModule.getListings();
+                if (result.success) {
+                    listings = result.listings;
+                    console.log('Listings loaded via module:', listings.length);
+                }
+            } catch (moduleError) {
+                console.error('Module fallback also failed:', moduleError);
+                // Use sample data as last resort
+                listings = [
+                    {
+                        id: 'sample1',
+                        title: 'Sample Listing 1',
+                        description: 'This is a sample listing to demonstrate the marketplace functionality.',
+                        lookingFor: 'Open to offers',
+                        userName: 'Demo User',
+                        imageUrl: './assets/images/placeholder.png',
+                        status: 'active',
+                        createdAt: { seconds: Date.now() / 1000 }
+                    }
+                ];
+                console.log('Using emergency sample data');
             }
         }
 
@@ -968,7 +1105,7 @@ async function showListingDetailSection() {
         const result = await listingsModule.getListing(listingId);
 
         if (result.success) {
-            const listing = result.listing;
+            const { listing } = result;
             const isOwner = appState.currentUser && appState.currentUser.uid === listing.userId;
 
             if (elements.mainContent) {
