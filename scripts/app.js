@@ -166,10 +166,19 @@ function handleAuthStateChanged(user) {
 
         // If this is a new login (not just a page refresh while logged in)
         if (!wasLoggedIn && isNowLoggedIn) {
-            console.log('User newly logged in, redirecting to dashboard');
-            // Redirect to dashboard after login
-            navigateTo('/dashboard');
-            return; // Skip handleRouting() as navigateTo will call it
+            // Check if we're on forums or messages pages
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('forums.html') ||
+                currentPath.includes('messages.html') ||
+                currentPath.includes('forum-category.html') ||
+                currentPath.includes('forum-post.html')) {
+                console.log('User logged in on forums/messages page, not redirecting');
+            } else {
+                console.log('User newly logged in, redirecting to dashboard');
+                // Redirect to dashboard after login
+                navigateTo('/dashboard');
+                return; // Skip handleRouting() as navigateTo will call it
+            }
         }
     } else {
         // User is signed out
@@ -213,8 +222,8 @@ function showAuthenticatedUI() {
             <a href="/" data-link>Home</a>
             <a href="/dashboard" data-link>Dashboard</a>
             <a href="/marketplace" data-link>Marketplace</a>
-            <a href="/messages" data-link>Messages</a>
-            <a href="/forums" data-link>Forums</a>
+            <a href="messages.html">Messages</a>
+            <a href="forums.html">Forums</a>
             <a href="/profile" data-link>Profile</a>
         `;
 
@@ -256,7 +265,7 @@ function showUnauthenticatedUI() {
         elements.navLinks.innerHTML = `
             <a href="/" data-link>Home</a>
             <a href="/marketplace" data-link>Marketplace</a>
-            <a href="/forums" data-link>Forums</a>
+            <a href="forums.html">Forums</a>
         `;
 
         // Reconnect navigation event listeners
@@ -531,7 +540,7 @@ function handleRouting() {
 
     // Check if user is authenticated for protected routes
     const isAuthenticated = !!appState.currentUser;
-    const protectedRoutes = ['/dashboard', '/profile', '/create-listing', '/messages'];
+    const protectedRoutes = ['/dashboard', '/profile', '/create-listing'];
 
     if (protectedRoutes.includes(path) && !isAuthenticated) {
         // Redirect to home if trying to access protected route while not logged in
