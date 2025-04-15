@@ -710,6 +710,29 @@ function showMarketplaceSection() {
             });
         }
 
+        // Add search and filter functionality
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const sortFilter = document.getElementById('sort-filter');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(() => {
+                applyFiltersAndSearch();
+            }, 300));
+        }
+
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', () => {
+                applyFiltersAndSearch();
+            });
+        }
+
+        if (sortFilter) {
+            sortFilter.addEventListener('change', () => {
+                applyFiltersAndSearch();
+            });
+        }
+
         // Load listings
         loadMarketplaceListings();
 
@@ -724,27 +747,182 @@ function showMarketplaceSection() {
     }
 }
 
-// Load marketplace listings
-async function loadMarketplaceListings() {
+// Debounce function to limit how often a function can be called
+function debounce(func, delay) {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+}
+
+// Apply filters and search to marketplace listings
+async function applyFiltersAndSearch() {
+    const searchInput = document.getElementById('search-input');
+    const categoryFilter = document.getElementById('category-filter');
+    const sortFilter = document.getElementById('sort-filter');
+
+    // Get filter values
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const category = categoryFilter ? categoryFilter.value : '';
+    const sortBy = sortFilter ? sortFilter.value : 'newest';
+
     try {
         setLoading(true);
-        const result = await listingsModule.getListings();
 
+        // Use direct Firestore query with the category filter if specified
+        let listings = [];
+        try {
+            const listingsRef = collection(db, 'listings');
+            let q;
+
+            if (category) {
+                q = query(listingsRef, where('status', '==', 'active'), where('category', '==', category));
+            } else {
+                q = query(listingsRef, where('status', '==', 'active'));
+            }
+
+            const querySnapshot = await getDocs(q);
+
+            // Process results
+            querySnapshot.forEach((doc) => {
+                listings.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            console.log('Filtered listings loaded:', listings.length);
+        } catch (error) {
+            console.error('Error fetching filtered listings:', error);
+            // Try the module as fallback
+            const result = await listingsModule.getListings({ category, status: 'active' });
+            if (result.success) {
+                listings = result.listings;
+            }
+        }
+
+        // Apply search filter client-side
+        if (searchTerm) {
+            listings = listings.filter(listing =>
+                listing.title.toLowerCase().includes(searchTerm) ||
+                listing.description.toLowerCase().includes(searchTerm) ||
+                (listing.lookingFor && listing.lookingFor.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        // Apply sorting client-side
+        if (sortBy === 'newest') {
+            listings.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateB - dateA;
+            });
+        } else if (sortBy === 'oldest') {
+            listings.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateA - dateB;
+            });
+        }
+
+        // Update the UI
         const listingsContainer = document.getElementById('listings-container');
         if (listingsContainer) {
-            if (result.success && result.listings.length > 0) {
-                listingsContainer.innerHTML = result.listings.map(listing => `
+            if (listings.length > 0) {
+                listingsContainer.innerHTML = listings.map(listing => `
                     <div class="marketplace-card" data-id="${listing.id}">
                         <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
                         <div class="marketplace-card-content">
                             <h3>${listing.title}</h3>
                             <p>${listing.description.substring(0, 100)}${listing.description.length > 100 ? '...' : ''}</p>
-                            <p><strong>Looking for:</strong> ${listing.lookingFor}</p>
+                            <p><strong>Looking for:</strong> ${listing.lookingFor || 'Not specified'}</p>
                         </div>
                         <div class="marketplace-card-footer">
                             <div class="user-badge">
                                 <img src="./assets/images/default-avatar.png" alt="User">
-                                <span>${listing.userName}</span>
+                                <span>${listing.userName || 'Anonymous'}</span>
+                            </div>
+                            <button class="btn-primary view-listing-btn" data-id="${listing.id}">View Details</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to view listing buttons
+                document.querySelectorAll('.view-listing-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const listingId = button.dataset.id;
+                        navigateTo(`/listing?id=${listingId}`);
+                    });
+                });
+            } else {
+                listingsContainer.innerHTML = '<p class="empty-state">No listings found matching your criteria.</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error applying filters:', error);
+        showError('Error filtering listings: ' + error.message);
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Load marketplace listings
+async function loadMarketplaceListings() {
+    try {
+        setLoading(true);
+
+        // Use direct Firestore query to avoid index issues
+        let listings = [];
+        try {
+            // Get all listings without sorting (we'll sort client-side)
+            const listingsRef = collection(db, 'listings');
+            // Only get active listings
+            const q = query(listingsRef, where('status', '==', 'active'));
+            const querySnapshot = await getDocs(q);
+
+            // Process results
+            querySnapshot.forEach((doc) => {
+                listings.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            // Sort by createdAt (descending) - client-side
+            listings.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateB - dateA;
+            });
+
+            console.log('Marketplace listings loaded:', listings.length);
+        } catch (error) {
+            console.error('Error fetching listings directly:', error);
+            // Try the module as fallback
+            const result = await listingsModule.getListings();
+            if (result.success) {
+                listings = result.listings;
+            }
+        }
+
+        const listingsContainer = document.getElementById('listings-container');
+        if (listingsContainer) {
+            if (listings.length > 0) {
+                listingsContainer.innerHTML = listings.map(listing => `
+                    <div class="marketplace-card" data-id="${listing.id}">
+                        <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
+                        <div class="marketplace-card-content">
+                            <h3>${listing.title}</h3>
+                            <p>${listing.description.substring(0, 100)}${listing.description.length > 100 ? '...' : ''}</p>
+                            <p><strong>Looking for:</strong> ${listing.lookingFor || 'Not specified'}</p>
+                        </div>
+                        <div class="marketplace-card-footer">
+                            <div class="user-badge">
+                                <img src="./assets/images/default-avatar.png" alt="User">
+                                <span>${listing.userName || 'Anonymous'}</span>
                             </div>
                             <button class="btn-primary view-listing-btn" data-id="${listing.id}">View Details</button>
                         </div>
@@ -763,6 +941,11 @@ async function loadMarketplaceListings() {
             }
         }
     } catch (error) {
+        console.error('Error in loadMarketplaceListings:', error);
+        const listingsContainer = document.getElementById('listings-container');
+        if (listingsContainer) {
+            listingsContainer.innerHTML = '<p class="empty-state">Error loading listings. Please try again later.</p>';
+        }
         showError('Error loading listings: ' + error.message);
     } finally {
         setLoading(false);
