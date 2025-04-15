@@ -17,6 +17,8 @@ const elements = {};
 
 // Initialize the application
 export async function initApp() {
+    console.log('Initializing application...');
+
     // Set up auth state change listener
     onAuthStateChanged(auth, handleAuthStateChanged);
 
@@ -26,11 +28,27 @@ export async function initApp() {
     // Set up event listeners
     setupEventListeners();
 
+    // Convert all regular links to SPA links
+    convertLinksToSPA();
+
     // Initialize UI based on current URL
     handleRouting();
 
     // Set up navigation handling
     window.addEventListener('popstate', handleRouting);
+
+    console.log('Application initialization complete');
+}
+
+// Convert regular links to SPA navigation
+function convertLinksToSPA() {
+    document.querySelectorAll('a[data-link]').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            navigateTo(href);
+        });
+    });
 }
 
 // Cache common DOM elements for reuse
@@ -393,13 +411,54 @@ function setLoading(isLoading) {
 
 // Navigation function
 function navigateTo(url) {
-    history.pushState(null, null, url);
+    // If the URL is a full path (starts with http or https), navigate directly
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        window.location.href = url;
+        return;
+    }
+
+    // If it's an HTML file, handle it directly
+    if (url.endsWith('.html')) {
+        // For HTML files, we'll use the browser's navigation
+        window.location.href = url;
+        return;
+    }
+
+    // For SPA routes, use history API
+    // Check if we need to add the GitHub Pages repository path
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Construct the full URL
+    const fullUrl = repoPath + url;
+
+    // Update the URL and handle routing
+    history.pushState(null, null, fullUrl);
     handleRouting();
 }
 
 // Route handling based on URL
 function handleRouting() {
-    const path = window.location.pathname;
+    // Get the path from the URL
+    let path = window.location.pathname;
+
+    // Handle GitHub Pages repository path
+    const repoPath = '/TradeSkills';
+    if (path.startsWith(repoPath)) {
+        path = path.substring(repoPath.length);
+    }
+
+    // Handle HTML file extensions for direct navigation
+    if (path.endsWith('.html')) {
+        path = '/' + path.replace('.html', '');
+    }
+
+    // Handle root path and index.html
+    if (path === '/' || path === '/index' || path === '') {
+        path = '/';
+    }
+
+    console.log('Routing to path:', path);
 
     // Hide all page sections first
     hideAllSections();
@@ -421,6 +480,7 @@ function handleRouting() {
     // Handle different routes
     switch (path) {
         case '/':
+        case '/index':
             showHomeSection();
             break;
         case '/dashboard':
@@ -438,7 +498,18 @@ function handleRouting() {
         case '/profile':
             showProfileSection();
             break;
+        case '/about':
+            navigateTo('/about.html');
+            break;
+        case '/how-it-works':
+            navigateTo('/how-it-works.html');
+            break;
         default:
+            // Check if it's a direct HTML file access
+            if (path.includes('.html')) {
+                // Let the browser handle it
+                return;
+            }
             // 404 - Not found
             showNotFoundSection();
     }
