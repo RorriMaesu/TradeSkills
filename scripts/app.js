@@ -1050,7 +1050,9 @@ async function loadMarketplaceListings() {
             if (listings.length > 0) {
                 listingsContainer.innerHTML = listings.map(listing => `
                     <div class="marketplace-card" data-id="${listing.id}">
-                        ${listing.isLocalImage && listing.imageId ?
+                        ${listing.isFirestoreImage && listing.imageId ?
+                            `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                            listing.isLocalImage && listing.imageId ?
                             `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                             `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
                         }
@@ -1117,11 +1119,13 @@ async function showListingDetailSection() {
                         <div class="container">
                             <div class="listing-detail">
                                 <div class="listing-image">
-                                    ${listing.isLocalImage && listing.imageId ?
+                                    ${listing.isFirestoreImage && listing.imageId ?
+                                        `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                                        listing.isLocalImage && listing.imageId ?
                                         `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                                         `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
                                     }
-                                    ${listing.imageUploadNote ? `<div class="form-note ${listing.isLocalImage ? 'info' : 'warning'}">${listing.imageUploadNote}</div>` : ''}
+                                    ${listing.imageUploadNote ? `<div class="form-note ${listing.isFirestoreImage ? 'success' : listing.isLocalImage ? 'info' : 'warning'}">${listing.imageUploadNote}</div>` : ''}
                                 </div>
                                 <div class="listing-info">
                                     <h1>${listing.title}</h1>
@@ -1261,10 +1265,10 @@ function showCreateListingSection() {
                             <label for="listing-image">Image (Optional)</label>
                             <input type="file" id="listing-image" accept="image/*">
                             ${window.location.hostname.includes('github.io') ?
-                                `<div class="form-note info">
+                                `<div class="form-note success">
                                     <strong>GitHub Pages Image Storage:</strong> Since you're using GitHub Pages,
-                                    your image will be stored locally in your browser using our special storage system.
-                                    The image will be visible to you and others viewing the listing.
+                                    your image will be stored in our Firestore database as a compressed base64 string.
+                                    This allows all users to see your images, unlike the previous localStorage approach.
                                 </div>` :
                                 ''
                             }
@@ -1507,7 +1511,9 @@ async function showDashboardSection() {
                                 ${listingsResult.success && listingsResult.listings.length > 0 ?
                                     listingsResult.listings.map(listing => `
                                         <div class="listing-card" data-id="${listing.id}">
-                                            ${listing.isLocalImage && listing.imageId ?
+                                            ${listing.isFirestoreImage && listing.imageId ?
+                                                `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                                                listing.isLocalImage && listing.imageId ?
                                                 `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                                                 `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
                                             }

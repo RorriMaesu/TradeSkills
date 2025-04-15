@@ -365,11 +365,24 @@ p {
     color: var(--primary-color);
 }
 
+.form-note.success {
+    background-color: rgba(46, 204, 113, 0.1);
+    border-left: 3px solid var(--success-color);
+    color: var(--success-color);
+}
+
 /* Local image styling */
 .local-image {
     max-width: 100%;
     height: auto;
     border: 2px solid var(--primary-color);
+}
+
+/* Firestore image styling */
+.firestore-image {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid var(--success-color);
 }
 
 .form-links {

@@ -36,14 +36,20 @@ export async function createListing(listingData, imageFile) {
                     // Handle both Firebase URLs and local Base64 images
                     enhancedListingData.imageUrl = uploadResult.imageUrl;
 
-                    // If it's a local image, store the imageId for retrieval
-                    if (uploadResult.isLocalImage) {
+                    // Handle different types of image storage
+                    if (uploadResult.isFirestoreImage) {
+                        enhancedListingData.imageId = uploadResult.imageId;
+                        enhancedListingData.firestoreId = uploadResult.firestoreId;
+                        enhancedListingData.isFirestoreImage = true;
+                        enhancedListingData.imageUploadNote = 'Image stored in Firestore for GitHub Pages compatibility';
+                        console.log('Firestore image ID stored:', uploadResult.imageId, 'Doc ID:', uploadResult.firestoreId);
+                    } else if (uploadResult.isLocalImage) {
                         enhancedListingData.imageId = uploadResult.imageId;
                         enhancedListingData.isLocalImage = true;
                         enhancedListingData.imageUploadNote = 'Image stored locally in your browser';
                         console.log('Local image ID stored:', uploadResult.imageId);
                     } else {
-                        console.log('Image uploaded successfully to Firebase, URL set:', uploadResult.imageUrl);
+                        console.log('Image uploaded successfully to Firebase Storage, URL set:', uploadResult.imageUrl);
                     }
                 } else {
                     // Upload failed but we have a fallback image
@@ -177,21 +183,32 @@ export async function updateListing(listingId, listingData, imageFile) {
                     // Set the new image URL
                     updateData.imageUrl = uploadResult.imageUrl;
 
-                    // Handle local image metadata if applicable
-                    if (uploadResult.isLocalImage) {
+                    // Handle different types of image storage
+                    if (uploadResult.isFirestoreImage) {
+                        updateData.imageId = uploadResult.imageId;
+                        updateData.firestoreId = uploadResult.firestoreId;
+                        updateData.isFirestoreImage = true;
+                        updateData.isLocalImage = false; // Clear any local image flag
+                        updateData.imageUploadNote = 'Image stored in Firestore for GitHub Pages compatibility';
+                        console.log('Firestore image ID stored for update:', uploadResult.imageId, 'Doc ID:', uploadResult.firestoreId);
+                    } else if (uploadResult.isLocalImage) {
                         updateData.imageId = uploadResult.imageId;
                         updateData.isLocalImage = true;
+                        updateData.isFirestoreImage = false; // Clear any Firestore image flag
+                        updateData.firestoreId = null; // Clear any Firestore ID
                         updateData.imageUploadNote = 'Image stored locally in your browser';
                         console.log('Local image ID stored for update:', uploadResult.imageId);
                     } else {
-                        // If switching from local to Firebase, clean up local image metadata
+                        // If switching from local/Firestore to Firebase Storage, clean up metadata
                         updateData.imageId = null;
                         updateData.isLocalImage = false;
+                        updateData.isFirestoreImage = false;
+                        updateData.firestoreId = null;
                         // Remove any previous image upload note
                         if (listingDoc.data().imageUploadNote) {
                             updateData.imageUploadNote = null; // This will remove the field in Firestore
                         }
-                        console.log('New image uploaded successfully to Firebase, URL set:', uploadResult.imageUrl);
+                        console.log('New image uploaded successfully to Firebase Storage, URL set:', uploadResult.imageUrl);
                     }
                 } else {
                     // Upload failed but we have a fallback image
@@ -269,8 +286,19 @@ export async function deleteListing(listingId) {
 
         // Delete the image if it exists
         if (listingData.imageUrl) {
+            // Handle Firestore image deletion
+            if (listingData.isFirestoreImage && listingData.firestoreId) {
+                try {
+                    // Delete the image document from Firestore
+                    await deleteDoc(doc(db, 'images', listingData.firestoreId));
+                    console.log('Firestore image deleted successfully, doc ID:', listingData.firestoreId);
+                } catch (firestoreError) {
+                    console.warn('Error deleting Firestore image:', firestoreError);
+                    // Continue anyway
+                }
+            }
             // Handle local image deletion
-            if (listingData.isLocalImage && listingData.imageId) {
+            else if (listingData.isLocalImage && listingData.imageId) {
                 try {
                     // Remove from localStorage
                     localStorage.removeItem(`tradeskills_image_${listingData.imageId}`);
@@ -456,33 +484,33 @@ function isGitHubPages() {
     return window.location.hostname.includes('github.io');
 }
 
-// Process and store image locally for GitHub Pages
+// Process and store image in Firestore for GitHub Pages
 async function processImageForGitHubPages(imageFile, userId) {
     return new Promise((resolve, reject) => {
         try {
             console.log('Processing image for GitHub Pages storage...');
             const reader = new FileReader();
 
-            reader.onload = function(event) {
+            reader.onload = async function(event) {
                 try {
                     const base64String = event.target.result;
                     const timestamp = Date.now();
                     const imageId = `${userId}_${timestamp}_${imageFile.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
-                    // Store in localStorage with a size check
-                    if (base64String.length > 5000000) { // ~5MB limit
-                        console.warn('Image too large for localStorage, using compressed version');
-                        // We'll use a canvas to compress the image
-                        const img = new Image();
-                        img.onload = function() {
+                    // Always compress the image to keep Firestore document size manageable
+                    console.log('Compressing image for Firestore storage...');
+                    const img = new Image();
+
+                    img.onload = async function() {
+                        try {
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d');
 
-                            // Calculate new dimensions (max 800px width/height)
+                            // Calculate new dimensions (max 600px width/height for Firestore storage)
                             const { width: originalWidth, height: originalHeight } = img;
                             let width = originalWidth;
                             let height = originalHeight;
-                            const maxSize = 800;
+                            const maxSize = 600; // Smaller max size for Firestore
 
                             if (width > height && width > maxSize) {
                                 height = Math.round(height * (maxSize / width));
@@ -497,76 +525,65 @@ async function processImageForGitHubPages(imageFile, userId) {
 
                             // Draw and compress
                             ctx.drawImage(img, 0, 0, width, height);
-                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality JPEG
+                            // Use higher compression (lower quality) for Firestore storage
+                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
-                            // Store the compressed image
+                            // Extract just the base64 data without the data URL prefix
+                            const base64Data = compressedBase64.split(',')[1];
+
+                            // Store the image data in Firestore
                             try {
-                                // Store image metadata in a separate object to save space
-                                const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
-                                imagesMetadata[imageId] = {
-                                    name: imageFile.name,
-                                    type: imageFile.type,
-                                    size: compressedBase64.length,
-                                    timestamp: timestamp,
-                                    userId: userId
+                                // Create a new document in the 'images' collection
+                                const imageData = {
+                                    imageId: imageId,
+                                    userId: userId,
+                                    fileName: imageFile.name,
+                                    contentType: 'image/jpeg',
+                                    base64Data: base64Data, // Store the compressed base64 data
+                                    width: width,
+                                    height: height,
+                                    originalSize: imageFile.size,
+                                    compressedSize: base64Data.length,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
                                 };
-                                localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
 
-                                // Store the actual image data
-                                localStorage.setItem(`tradeskills_image_${imageId}`, compressedBase64);
+                                // Add to Firestore
+                                const imagesRef = collection(db, 'images');
+                                const docRef = await addDoc(imagesRef, imageData);
 
-                                console.log('Compressed image stored in localStorage, size:', compressedBase64.length);
+                                console.log('Image stored in Firestore with ID:', docRef.id);
+
+                                // Return success with the image data URL for immediate display
                                 resolve({
                                     success: true,
                                     imageId: imageId,
-                                    imageUrl: `data:image/jpeg;base64,${compressedBase64.split(',')[1]}`,
-                                    isLocalImage: true
+                                    firestoreId: docRef.id,
+                                    imageUrl: `data:image/jpeg;base64,${base64Data}`,
+                                    isFirestoreImage: true
                                 });
-                            } catch (storageError) {
-                                console.error('Error storing compressed image in localStorage:', storageError);
+                            } catch (firestoreError) {
+                                console.error('Error storing image in Firestore:', firestoreError);
                                 resolve({
                                     success: false,
                                     imageUrl: './assets/images/placeholder.png',
-                                    error: 'Failed to store image: Storage limit exceeded',
-                                    isLocalStorageError: true
+                                    error: 'Failed to store image in Firestore: ' + firestoreError.message,
+                                    isFirestoreError: true
                                 });
                             }
-                        };
-                        img.src = base64String;
-                    } else {
-                        // Image is small enough to store directly
-                        try {
-                            // Store image metadata
-                            const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
-                            imagesMetadata[imageId] = {
-                                name: imageFile.name,
-                                type: imageFile.type,
-                                size: base64String.length,
-                                timestamp: timestamp,
-                                userId: userId
-                            };
-                            localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
-
-                            // Store the actual image data
-                            localStorage.setItem(`tradeskills_image_${imageId}`, base64String);
-
-                            console.log('Image stored in localStorage, size:', base64String.length);
-                            resolve({
-                                success: true,
-                                imageId: imageId,
-                                imageUrl: base64String,
-                                isLocalImage: true
-                            });
-                        } catch (storageError) {
-                            console.error('Error storing image in localStorage:', storageError);
-                            resolve({
-                                success: false,
-                                imageUrl: './assets/images/placeholder.png',
-                                error: 'Failed to store image: Storage limit exceeded',
-                                isLocalStorageError: true
-                            });
+                        } catch (canvasError) {
+                            console.error('Error processing image with canvas:', canvasError);
+                            reject(canvasError);
                         }
-                    }
+                    };
+
+                    img.onerror = function(imgError) {
+                        console.error('Error loading image for processing:', imgError);
+                        reject(imgError);
+                    };
+
+                    img.src = base64String;
+
                 } catch (processError) {
                     console.error('Error processing image data:', processError);
                     reject(processError);
@@ -588,17 +605,52 @@ async function processImageForGitHubPages(imageFile, userId) {
     });
 }
 
-// Get image from localStorage by ID
-export function getLocalImage(imageId) {
+// Get image from Firestore by ID
+export async function getFirestoreImage(imageId) {
     try {
-        const imageData = localStorage.getItem(`tradeskills_image_${imageId}`);
-        if (!imageData) {
-            console.warn(`Image with ID ${imageId} not found in localStorage`);
+        console.log('Fetching image from Firestore with ID:', imageId);
+
+        // Query the images collection for the image with this ID
+        const imagesRef = collection(db, 'images');
+        const q = query(imagesRef, where('imageId', '==', imageId));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            console.warn(`Image with ID ${imageId} not found in Firestore`);
             return null;
         }
-        return imageData;
+
+        // Get the first matching document
+        const imageDoc = querySnapshot.docs[0];
+        const imageData = imageDoc.data();
+
+        // Return the base64 data as a data URL
+        return `data:${imageData.contentType || 'image/jpeg'};base64,${imageData.base64Data}`;
     } catch (error) {
-        console.error('Error retrieving image from localStorage:', error);
+        console.error('Error retrieving image from Firestore:', error);
+        return null;
+    }
+}
+
+// Get image from Firestore by Firestore document ID
+export async function getFirestoreImageByDocId(firestoreId) {
+    try {
+        console.log('Fetching image from Firestore with document ID:', firestoreId);
+
+        // Get the document directly by ID
+        const imageDoc = await getDoc(doc(db, 'images', firestoreId));
+
+        if (!imageDoc.exists()) {
+            console.warn(`Image document with ID ${firestoreId} not found in Firestore`);
+            return null;
+        }
+
+        const imageData = imageDoc.data();
+
+        // Return the base64 data as a data URL
+        return `data:${imageData.contentType || 'image/jpeg'};base64,${imageData.base64Data}`;
+    } catch (error) {
+        console.error('Error retrieving image from Firestore by doc ID:', error);
         return null;
     }
 }
