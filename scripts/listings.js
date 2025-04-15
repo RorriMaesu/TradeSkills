@@ -26,30 +26,42 @@ export async function createListing(listingData, imageFile) {
             updatedAt: new Date()
         };
 
-        // If there's an image file, try to upload it to Firebase Storage
+        // If there's an image file, try to upload it to Firebase Storage or store locally
         if (imageFile) {
             try {
                 console.log('Image file provided, attempting to upload...');
                 const uploadResult = await uploadListingImage(imageFile);
 
                 if (uploadResult.success) {
+                    // Handle both Firebase URLs and local Base64 images
                     enhancedListingData.imageUrl = uploadResult.imageUrl;
-                    console.log('Image uploaded successfully, URL set:', uploadResult.imageUrl);
+
+                    // If it's a local image, store the imageId for retrieval
+                    if (uploadResult.isLocalImage) {
+                        enhancedListingData.imageId = uploadResult.imageId;
+                        enhancedListingData.isLocalImage = true;
+                        enhancedListingData.imageUploadNote = 'Image stored locally in your browser';
+                        console.log('Local image ID stored:', uploadResult.imageId);
+                    } else {
+                        console.log('Image uploaded successfully to Firebase, URL set:', uploadResult.imageUrl);
+                    }
                 } else {
                     // Upload failed but we have a fallback image
                     enhancedListingData.imageUrl = uploadResult.imageUrl;
 
                     // Add a note about the image upload failure to the listing
                     if (uploadResult.isGitHubPagesError || uploadResult.isCorsError) {
-                        enhancedListingData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions on GitHub Pages';
+                        enhancedListingData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions';
+                    } else if (uploadResult.isLocalStorageError) {
+                        enhancedListingData.imageUploadNote = 'Image could not be stored locally (too large or storage limit exceeded)';
                     } else {
                         enhancedListingData.imageUploadNote = uploadResult.error || 'Image upload failed';
                     }
 
-                    console.warn('Using placeholder image due to upload failure:', uploadResult.error);
+                    console.warn('Using placeholder image due to upload/storage failure:', uploadResult.error);
                 }
             } catch (imageError) {
-                console.warn('Unexpected error during image upload, using placeholder:', imageError);
+                console.warn('Unexpected error during image handling, using placeholder:', imageError);
                 // Continue with the listing creation even if image upload fails
                 enhancedListingData.imageUrl = './assets/images/placeholder.png';
                 enhancedListingData.imageUploadNote = 'Image upload failed due to an unexpected error';
@@ -120,47 +132,91 @@ export async function updateListing(listingId, listingData, imageFile) {
                 console.log('Image file provided for update, attempting to handle...');
                 // If the listing already has an image and it's not a placeholder, try to delete it
                 const existingImageUrl = listingDoc.data().imageUrl;
-                if (existingImageUrl && !existingImageUrl.includes('placeholder.png')) {
-                    try {
-                        // Extract the path from the URL
-                        const imagePath = existingImageUrl.split('listing-images%2F')[1].split('?')[0];
-                        const imageRef = ref(storage, `listing-images/${imagePath}`);
-                        await deleteObject(imageRef);
-                        console.log('Existing image deleted successfully');
-                    } catch (deleteError) {
-                        console.warn('Error deleting existing image:', deleteError);
-                        // Continue anyway
+                const existingImageId = listingDoc.data().imageId;
+                const isExistingLocalImage = listingDoc.data().isLocalImage;
+
+                // Handle cleanup of previous image
+                if (existingImageUrl) {
+                    if (isExistingLocalImage && existingImageId) {
+                        // Clean up local storage image
+                        try {
+                            localStorage.removeItem(`tradeskills_image_${existingImageId}`);
+
+                            // Update metadata
+                            const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
+                            if (imagesMetadata[existingImageId]) {
+                                delete imagesMetadata[existingImageId];
+                                localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
+                            }
+
+                            console.log('Existing local image cleaned up successfully');
+                        } catch (localStorageError) {
+                            console.warn('Error cleaning up local image:', localStorageError);
+                            // Continue anyway
+                        }
+                    } else if (existingImageUrl.includes('firebasestorage') && !existingImageUrl.includes('placeholder.png')) {
+                        // Clean up Firebase Storage image
+                        try {
+                            // Extract the path from the URL
+                            const imagePath = existingImageUrl.split('listing-images%2F')[1].split('?')[0];
+                            const imageRef = ref(storage, `listing-images/${imagePath}`);
+                            await deleteObject(imageRef);
+                            console.log('Existing Firebase image deleted successfully');
+                        } catch (deleteError) {
+                            console.warn('Error deleting existing Firebase image:', deleteError);
+                            // Continue anyway
+                        }
                     }
                 }
 
-                // Upload the new image
-                console.log('Uploading new image...');
+                // Upload/store the new image
+                console.log('Processing new image...');
                 const uploadResult = await uploadListingImage(imageFile);
 
                 if (uploadResult.success) {
+                    // Set the new image URL
                     updateData.imageUrl = uploadResult.imageUrl;
-                    // Remove any previous image upload note if it exists
-                    if (listingDoc.data().imageUploadNote) {
-                        updateData.imageUploadNote = null; // This will remove the field in Firestore
+
+                    // Handle local image metadata if applicable
+                    if (uploadResult.isLocalImage) {
+                        updateData.imageId = uploadResult.imageId;
+                        updateData.isLocalImage = true;
+                        updateData.imageUploadNote = 'Image stored locally in your browser';
+                        console.log('Local image ID stored for update:', uploadResult.imageId);
+                    } else {
+                        // If switching from local to Firebase, clean up local image metadata
+                        updateData.imageId = null;
+                        updateData.isLocalImage = false;
+                        // Remove any previous image upload note
+                        if (listingDoc.data().imageUploadNote) {
+                            updateData.imageUploadNote = null; // This will remove the field in Firestore
+                        }
+                        console.log('New image uploaded successfully to Firebase, URL set:', uploadResult.imageUrl);
                     }
-                    console.log('New image uploaded successfully, URL set:', uploadResult.imageUrl);
                 } else {
                     // Upload failed but we have a fallback image
                     updateData.imageUrl = uploadResult.imageUrl;
+                    // Clean up any existing local image metadata
+                    updateData.imageId = null;
+                    updateData.isLocalImage = false;
 
                     // Add a note about the image upload failure to the listing
                     if (uploadResult.isGitHubPagesError || uploadResult.isCorsError) {
-                        updateData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions on GitHub Pages';
+                        updateData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions';
+                    } else if (uploadResult.isLocalStorageError) {
+                        updateData.imageUploadNote = 'Image could not be stored locally (too large or storage limit exceeded)';
                     } else {
                         updateData.imageUploadNote = uploadResult.error || 'Image upload failed';
                     }
 
-                    console.warn('Using placeholder image due to upload failure:', uploadResult.error);
+                    console.warn('Using placeholder image due to upload/storage failure:', uploadResult.error);
                 }
             } catch (imageError) {
                 console.warn('Unexpected error during image update, using placeholder:', imageError);
                 // Continue with the listing update even if image handling fails
                 updateData.imageUrl = './assets/images/placeholder.png';
+                updateData.imageId = null;
+                updateData.isLocalImage = false;
                 updateData.imageUploadNote = 'Image upload failed due to an unexpected error';
             }
         }
@@ -211,17 +267,39 @@ export async function deleteListing(listingId) {
             };
         }
 
-        // Delete the image from storage if it exists
+        // Delete the image if it exists
         if (listingData.imageUrl) {
-            try {
-                // Extract the path from the URL
-                const imagePath = listingData.imageUrl.split('listing-images%2F')[1].split('?')[0];
-                const imageRef = ref(storage, `listing-images/${imagePath}`);
-                await deleteObject(imageRef);
-                console.log('Listing image deleted successfully');
-            } catch (error) {
-                console.warn('Error deleting listing image:', error);
-                // Continue anyway
+            // Handle local image deletion
+            if (listingData.isLocalImage && listingData.imageId) {
+                try {
+                    // Remove from localStorage
+                    localStorage.removeItem(`tradeskills_image_${listingData.imageId}`);
+
+                    // Update metadata
+                    const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
+                    if (imagesMetadata[listingData.imageId]) {
+                        delete imagesMetadata[listingData.imageId];
+                        localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
+                    }
+
+                    console.log('Local listing image deleted successfully');
+                } catch (localError) {
+                    console.warn('Error deleting local listing image:', localError);
+                    // Continue anyway
+                }
+            }
+            // Handle Firebase Storage image deletion
+            else if (listingData.imageUrl.includes('firebasestorage') && !listingData.imageUrl.includes('placeholder.png')) {
+                try {
+                    // Extract the path from the URL
+                    const imagePath = listingData.imageUrl.split('listing-images%2F')[1].split('?')[0];
+                    const imageRef = ref(storage, `listing-images/${imagePath}`);
+                    await deleteObject(imageRef);
+                    console.log('Firebase listing image deleted successfully');
+                } catch (error) {
+                    console.warn('Error deleting Firebase listing image:', error);
+                    // Continue anyway
+                }
             }
         }
 
@@ -378,31 +456,185 @@ function isGitHubPages() {
     return window.location.hostname.includes('github.io');
 }
 
-// Upload a listing image to Firebase Storage
+// Process and store image locally for GitHub Pages
+async function processImageForGitHubPages(imageFile, userId) {
+    return new Promise((resolve, reject) => {
+        try {
+            console.log('Processing image for GitHub Pages storage...');
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                try {
+                    const base64String = event.target.result;
+                    const timestamp = Date.now();
+                    const imageId = `${userId}_${timestamp}_${imageFile.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+                    // Store in localStorage with a size check
+                    if (base64String.length > 5000000) { // ~5MB limit
+                        console.warn('Image too large for localStorage, using compressed version');
+                        // We'll use a canvas to compress the image
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            // Calculate new dimensions (max 800px width/height)
+                            const { width: originalWidth, height: originalHeight } = img;
+                            let width = originalWidth;
+                            let height = originalHeight;
+                            const maxSize = 800;
+
+                            if (width > height && width > maxSize) {
+                                height = Math.round(height * (maxSize / width));
+                                width = maxSize;
+                            } else if (height > maxSize) {
+                                width = Math.round(width * (maxSize / height));
+                                height = maxSize;
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+
+                            // Draw and compress
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality JPEG
+
+                            // Store the compressed image
+                            try {
+                                // Store image metadata in a separate object to save space
+                                const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
+                                imagesMetadata[imageId] = {
+                                    name: imageFile.name,
+                                    type: imageFile.type,
+                                    size: compressedBase64.length,
+                                    timestamp: timestamp,
+                                    userId: userId
+                                };
+                                localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
+
+                                // Store the actual image data
+                                localStorage.setItem(`tradeskills_image_${imageId}`, compressedBase64);
+
+                                console.log('Compressed image stored in localStorage, size:', compressedBase64.length);
+                                resolve({
+                                    success: true,
+                                    imageId: imageId,
+                                    imageUrl: `data:image/jpeg;base64,${compressedBase64.split(',')[1]}`,
+                                    isLocalImage: true
+                                });
+                            } catch (storageError) {
+                                console.error('Error storing compressed image in localStorage:', storageError);
+                                resolve({
+                                    success: false,
+                                    imageUrl: './assets/images/placeholder.png',
+                                    error: 'Failed to store image: Storage limit exceeded',
+                                    isLocalStorageError: true
+                                });
+                            }
+                        };
+                        img.src = base64String;
+                    } else {
+                        // Image is small enough to store directly
+                        try {
+                            // Store image metadata
+                            const imagesMetadata = JSON.parse(localStorage.getItem('tradeskills_images_metadata') || '{}');
+                            imagesMetadata[imageId] = {
+                                name: imageFile.name,
+                                type: imageFile.type,
+                                size: base64String.length,
+                                timestamp: timestamp,
+                                userId: userId
+                            };
+                            localStorage.setItem('tradeskills_images_metadata', JSON.stringify(imagesMetadata));
+
+                            // Store the actual image data
+                            localStorage.setItem(`tradeskills_image_${imageId}`, base64String);
+
+                            console.log('Image stored in localStorage, size:', base64String.length);
+                            resolve({
+                                success: true,
+                                imageId: imageId,
+                                imageUrl: base64String,
+                                isLocalImage: true
+                            });
+                        } catch (storageError) {
+                            console.error('Error storing image in localStorage:', storageError);
+                            resolve({
+                                success: false,
+                                imageUrl: './assets/images/placeholder.png',
+                                error: 'Failed to store image: Storage limit exceeded',
+                                isLocalStorageError: true
+                            });
+                        }
+                    }
+                } catch (processError) {
+                    console.error('Error processing image data:', processError);
+                    reject(processError);
+                }
+            };
+
+            reader.onerror = function(error) {
+                console.error('Error reading file:', error);
+                reject(error);
+            };
+
+            // Read the image file as a data URL (base64)
+            reader.readAsDataURL(imageFile);
+
+        } catch (error) {
+            console.error('Error in processImageForGitHubPages:', error);
+            reject(error);
+        }
+    });
+}
+
+// Get image from localStorage by ID
+export function getLocalImage(imageId) {
+    try {
+        const imageData = localStorage.getItem(`tradeskills_image_${imageId}`);
+        if (!imageData) {
+            console.warn(`Image with ID ${imageId} not found in localStorage`);
+            return null;
+        }
+        return imageData;
+    } catch (error) {
+        console.error('Error retrieving image from localStorage:', error);
+        return null;
+    }
+}
+
+// Upload a listing image to Firebase Storage or store locally for GitHub Pages
 async function uploadListingImage(imageFile) {
     // Early warning for GitHub Pages environment
     if (isGitHubPages()) {
-        console.warn('Running on GitHub Pages - image uploads may fail due to CORS restrictions');
+        console.warn('Running on GitHub Pages - using local storage for images instead of Firebase');
     }
 
     try {
         const user = auth.currentUser;
+
+        // If we're on GitHub Pages, use the local storage approach
+        if (isGitHubPages()) {
+            console.log('Using GitHub Pages image storage workaround');
+            try {
+                return await processImageForGitHubPages(imageFile, user.uid);
+            } catch (localStorageError) {
+                console.error('Error with GitHub Pages image storage:', localStorageError);
+                return {
+                    success: false,
+                    imageUrl: './assets/images/placeholder.png',
+                    error: 'Failed to store image locally: ' + (localStorageError.message || 'Unknown error'),
+                    isLocalStorageError: true
+                };
+            }
+        }
+
+        // For non-GitHub Pages environments, use Firebase Storage
         const timestamp = Date.now();
         const fileName = `${user.uid}_${timestamp}_${imageFile.name}`;
         const storageRef = ref(storage, `listing-images/${fileName}`);
 
         console.log('Attempting to upload image to Firebase Storage...');
-
-        // If we're on GitHub Pages, don't even try to upload (known to fail)
-        if (isGitHubPages()) {
-            console.warn('Skipping actual upload attempt on GitHub Pages to avoid CORS errors');
-            return {
-                success: false,
-                imageUrl: './assets/images/placeholder.png',
-                error: 'Image uploads are not supported on GitHub Pages due to CORS restrictions',
-                isGitHubPagesError: true
-            };
-        }
 
         try {
             // Upload the file
@@ -427,12 +659,19 @@ async function uploadListingImage(imageFile) {
 
             if (isCorsError) {
                 console.warn('CORS error detected when uploading to Firebase Storage:', uploadError);
-                return {
-                    success: false,
-                    imageUrl: './assets/images/placeholder.png',
-                    error: 'Image upload failed due to CORS restrictions',
-                    isCorsError: true
-                };
+                // Try the GitHub Pages approach as fallback
+                try {
+                    console.log('Trying GitHub Pages approach as fallback...');
+                    return await processImageForGitHubPages(imageFile, user.uid);
+                } catch (fallbackError) {
+                    console.error('Fallback to GitHub Pages approach also failed:', fallbackError);
+                    return {
+                        success: false,
+                        imageUrl: './assets/images/placeholder.png',
+                        error: 'Image upload failed with both methods',
+                        isCorsError: true
+                    };
+                }
             } else {
                 console.error('Non-CORS upload error:', uploadError);
                 return {

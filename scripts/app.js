@@ -1050,7 +1050,10 @@ async function loadMarketplaceListings() {
             if (listings.length > 0) {
                 listingsContainer.innerHTML = listings.map(listing => `
                     <div class="marketplace-card" data-id="${listing.id}">
-                        <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
+                        ${listing.isLocalImage && listing.imageId ?
+                            `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
+                            `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
+                        }
                         <div class="marketplace-card-content">
                             <h3>${listing.title}</h3>
                             <p>${listing.description.substring(0, 100)}${listing.description.length > 100 ? '...' : ''}</p>
@@ -1114,8 +1117,11 @@ async function showListingDetailSection() {
                         <div class="container">
                             <div class="listing-detail">
                                 <div class="listing-image">
-                                    <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
-                                    ${listing.imageUploadNote ? `<div class="form-note warning">${listing.imageUploadNote}</div>` : ''}
+                                    ${listing.isLocalImage && listing.imageId ?
+                                        `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
+                                        `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
+                                    }
+                                    ${listing.imageUploadNote ? `<div class="form-note ${listing.isLocalImage ? 'info' : 'warning'}">${listing.imageUploadNote}</div>` : ''}
                                 </div>
                                 <div class="listing-info">
                                     <h1>${listing.title}</h1>
@@ -1255,9 +1261,10 @@ function showCreateListingSection() {
                             <label for="listing-image">Image (Optional)</label>
                             <input type="file" id="listing-image" accept="image/*">
                             ${window.location.hostname.includes('github.io') ?
-                                `<div class="form-note warning">
-                                    <strong>Note:</strong> Image uploads may not work on GitHub Pages due to CORS restrictions.
-                                    Your listing will use a placeholder image instead.
+                                `<div class="form-note info">
+                                    <strong>GitHub Pages Image Storage:</strong> Since you're using GitHub Pages,
+                                    your image will be stored locally in your browser using our special storage system.
+                                    The image will be visible to you and others viewing the listing.
                                 </div>` :
                                 ''
                             }
@@ -1500,7 +1507,10 @@ async function showDashboardSection() {
                                 ${listingsResult.success && listingsResult.listings.length > 0 ?
                                     listingsResult.listings.map(listing => `
                                         <div class="listing-card" data-id="${listing.id}">
-                                            <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
+                                            ${listing.isLocalImage && listing.imageId ?
+                                                `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
+                                                `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
+                                            }
                                             <div class="listing-details">
                                                 <h3>${listing.title}</h3>
                                                 <p>${listing.description.substring(0, 50)}${listing.description.length > 50 ? '...' : ''}</p>

@@ -359,6 +359,19 @@ p {
     color: var(--warning-color);
 }
 
+.form-note.info {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 3px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Local image styling */
+.local-image {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid var(--primary-color);
+}
+
 .form-links {
     margin-top: var(--spacing-md);
     display: flex;
