@@ -511,7 +511,9 @@ function handleRouting() {
 
     // Handle HTML file extensions for direct navigation
     if (path.endsWith('.html')) {
-        path = '/' + path.replace('.html', '');
+        // Extract the filename without extension
+        const filename = path.split('/').pop().replace('.html', '');
+        path = '/' + filename;
     }
 
     // Handle root path and index.html
@@ -1642,32 +1644,34 @@ function showCreateListingSection() {
 
 // Show messages section
 async function showMessagesSection() {
-    // Check if we're on GitHub Pages
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const repoPath = isGitHubPages ? '/TradeSkills' : '';
-
     // Check if we're already on the messages page
     if (window.location.pathname.includes('messages.html')) {
         console.log('Already on messages page, not redirecting');
         return;
     }
 
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    console.log('Redirecting to messages page');
     // Redirect to the messages.html page with the correct path
     window.location.href = `${repoPath}/messages.html`;
 }
 
 // Show forums section
 async function showForumsSection() {
-    // Check if we're on GitHub Pages
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const repoPath = isGitHubPages ? '/TradeSkills' : '';
-
     // Check if we're already on the forums page
     if (window.location.pathname.includes('forums.html')) {
         console.log('Already on forums page, not redirecting');
         return;
     }
 
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    console.log('Redirecting to forums page');
     // Redirect to the forums.html page with the correct path
     window.location.href = `${repoPath}/forums.html`;
 }
@@ -1682,10 +1686,6 @@ async function showForumCategorySection() {
         return;
     }
 
-    // Check if we're on GitHub Pages
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const repoPath = isGitHubPages ? '/TradeSkills' : '';
-
     // Check if we're already on the forum category page with the correct ID
     if (window.location.pathname.includes('forum-category.html') &&
         window.location.search.includes(`id=${categoryId}`)) {
@@ -1693,6 +1693,11 @@ async function showForumCategorySection() {
         return;
     }
 
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    console.log('Redirecting to forum category page');
     // Redirect to the forum-category.html page with the category ID
     window.location.href = `${repoPath}/forum-category.html?id=${categoryId}`;
 }
@@ -1707,10 +1712,6 @@ async function showForumPostSection() {
         return;
     }
 
-    // Check if we're on GitHub Pages
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const repoPath = isGitHubPages ? '/TradeSkills' : '';
-
     // Check if we're already on the forum post page with the correct ID
     if (window.location.pathname.includes('forum-post.html') &&
         window.location.search.includes(`id=${postId}`)) {
@@ -1718,6 +1719,11 @@ async function showForumPostSection() {
         return;
     }
 
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    console.log('Redirecting to forum post page');
     // Redirect to the forum-post.html page with the post ID
     window.location.href = `${repoPath}/forum-post.html?id=${postId}`;
 }
