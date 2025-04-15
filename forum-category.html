@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category | TradeSkills Forums</title>
+    <meta name="description" content="Browse posts in this TradeSkills forum category.">
+    <base href="https://rorrimaesu.github.io/TradeSkills/">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="stylesheet" href="styles/messaging.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="scripts/main.js" type="module" crossorigin="anonymous" defer></script>
+    <script src="scripts/forums-ui.js" type="module" crossorigin="anonymous" defer></script>
+</head>
+<body>
+    <header class="nav-bar" id="main-header">
+        <div class="container">
+            <div class="logo">
+                <a href="/" data-link>TradeSkills</a>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="/" data-link>Home</a>
+                <a href="/marketplace" data-link>Marketplace</a>
+                <a href="/messages" data-link>Messages</a>
+                <a href="/forums" data-link class="active">Forums</a>
+                <a href="/how-it-works" data-link>How It Works</a>
+                <a href="/about" data-link>About</a>
+            </nav>
+            <div class="auth-buttons" id="auth-buttons">
+                <button id="login-button" class="btn-login">Login</button>
+                <button id="register-button" class="btn-register">Register</button>
+            </div>
+            <button id="mobile-menu-toggle" aria-label="Toggle navigation menu" class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content" id="main-content">
+        <section id="forum-category-section" class="section section-forum-category">
+            <div class="container">
+                <div class="forums-container">
+                    <div class="category-header" id="category-header">
+                        <!-- Category header will be loaded here -->
+                        <h1>Category Name</h1>
+                        <p class="category-header-description">Category description goes here.</p>
+                    </div>
+
+                    <div class="forums-actions">
+                        <div class="forums-search">
+                            <input type="text" placeholder="Search posts..." id="posts-search-input">
+                        </div>
+                        <div class="forums-buttons">
+                            <button class="btn-primary" id="create-post-button">Create Post</button>
+                        </div>
+                    </div>
+
+                    <div class="posts-list" id="posts-list">
+                        <!-- Posts will be loaded here -->
+                        <div class="empty-state">
+                            <p>No posts found in this category.</p>
+                            <p>Be the first to create a post!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer" id="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TradeSkills</h3>
+                    <p>Exchange goods and services without cash. Join our bartering community today!</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/" data-link>Home</a></li>
+                        <li><a href="/marketplace" data-link>Marketplace</a></li>
+                        <li><a href="/messages" data-link>Messages</a></li>
+                        <li><a href="/forums" data-link>Forums</a></li>
+                        <li><a href="/how-it-works" data-link>How It Works</a></li>
+                        <li><a href="/about" data-link>About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p>Email: support@tradeskills.com</p>
+                    <p>Phone: (123) 456-7890</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Support Us</h3>
+                    <a href="https://www.buymeacoffee.com" target="_blank">
+                        <img src="assets/images/capitalismSucksButiHaveAlwaysBeenReallyPassionateAboutAffordingFood.png" alt="Buy Me A Coffee" class="buymeacoffee-img">
+                    </a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TradeSkills. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <span class="close-button">&times;</span>
+            <div class="modal-tabs">
+                <button class="tab-button active" id="login-tab">Login</button>
+                <button class="tab-button" id="register-tab">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <h2>Login to Your Account</h2>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Login</button>
+                </div>
+                <div class="form-links">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-login-button" class="btn-google">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Login with Google
+                    </button>
+                </div>
+                <div id="login-error" class="error-message"></div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" style="display: none;">
+                <h2>Create an Account</h2>
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Register</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="google-register-button" class="btn-google">
+                        <img src="assets/images/google-icon.svg" alt="Google">
+                        Register with Google
+                    </button>
+                </div>
+                <div id="register-error" class="error-message"></div>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="auth-form" style="display: none;">
+                <h2>Reset Your Password</h2>
+                <div class="form-group">
+                    <label for="reset-email">Email</label>
+                    <input type="email" id="reset-email" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-submit">Reset Password</button>
+                </div>
+                <div class="form-links">
+                    <a href="#" id="back-to-login-link">Back to Login</a>
+                </div>
+                <div id="reset-message" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
+        <ul>
+            <li id="profile-name">Name</li>
+            <li><a href="/dashboard" data-link>My Dashboard</a></li>
+            <li><a href="/profile" data-link>Profile Settings</a></li>
+            <li><a href="/my-listings" data-link>My Listings</a></li>
+            <li><a href="/my-trades" data-link>My Trades</a></li>
+            <li><a href="#" id="logout-button">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="create-post-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Create New Post</h2>
+            <form id="create-post-form">
+                <input type="hidden" id="category-id">
+                <div class="form-group">
+                    <label for="post-title">Title</label>
+                    <input type="text" id="post-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="post-content">Content</label>
+                    <textarea id="post-content" rows="8" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancel-post-button">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
