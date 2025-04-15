@@ -54,6 +54,27 @@ Visit the live site at [rorrimaesu.github.io/TradeSkills](https://rorrimaesu.git
 4. Update the Firebase configuration in `scripts/firebase-config.js`
 5. Use a local server to run the project (e.g., Live Server VS Code extension)
 
+### Firestore Indexes
+
+The application uses client-side sorting to avoid requiring Firestore composite indexes. However, for optimal performance in production, you should create the following indexes in your Firebase console:
+
+1. **Listings Collection**:
+   - Fields: `userId` (Ascending), `createdAt` (Descending)
+   - Query scope: Collection
+   - [Create this index](https://console.firebase.google.com/v1/r/project/tradeskills-75c84/firestore/indexes?create_composite=ClJwcm9qZWN0cy90cmFkZXNraWxscy03NWM4NC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvbGlzdGluZ3MvaW5kZXhlcy9fEAEaCgoGdXNlcklkEAEaDQoJY3JlYXRlZEF0EAIaDAoIX19uYW1lX18QAg)
+
+2. **Trades Collection (Proposer)**:
+   - Fields: `proposerId` (Ascending), `createdAt` (Descending)
+   - Query scope: Collection
+   - [Create this index](https://console.firebase.google.com/v1/r/project/tradeskills-75c84/firestore/indexes?create_composite=ClBwcm9qZWN0cy90cmFkZXNraWxscy03NWM4NC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvdHJhZGVzL2luZGV4ZXMvXxABGg4KCnByb3Bvc2VySWQQARoNCgljcmVhdGVkQXQQAhoMCghfX25hbWVfXxAC)
+
+3. **Trades Collection (Receiver)**:
+   - Fields: `receiverId` (Ascending), `createdAt` (Descending)
+   - Query scope: Collection
+   - [Create this index](https://console.firebase.google.com/v1/r/project/tradeskills-75c84/firestore/indexes?create_composite=ClBwcm9qZWN0cy90cmFkZXNraWxscy03NWM4NC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvdHJhZGVzL2luZGV4ZXMvXxABGg4KCnJlY2VpdmVySWQQARoNCgljcmVhdGVkQXQQAhoMCghfX25hbWVfXxAC)
+
+Note: The application will work without these indexes, but you'll see warnings in the console, and performance may be affected for large datasets.
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
