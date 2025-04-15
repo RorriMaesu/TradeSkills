@@ -30,21 +30,33 @@ const appState = {
     searchTimeout: null
 };
 
+// Flag to track initialization
+let isInitialized = false;
+
 // Initialize the messaging UI
 export async function initMessagingUI() {
+    // Prevent double initialization
+    if (isInitialized) {
+        console.log('Messaging UI already initialized, skipping...');
+        return;
+    }
+
     console.log('Initializing messaging UI...');
-    
+
     // Set up auth state change listener
     onAuthStateChanged(auth, handleAuthStateChanged);
-    
+
     // Set up event listeners
     setupEventListeners();
+
+    // Mark as initialized
+    isInitialized = true;
 }
 
 // Handle authentication state changes
 function handleAuthStateChanged(user) {
     appState.currentUser = user;
-    
+
     if (user) {
         // User is logged in, load conversations
         loadConversations();
@@ -60,17 +72,17 @@ function setupEventListeners() {
     if (elements.newMessageButton) {
         elements.newMessageButton.addEventListener('click', showNewMessageModal);
     }
-    
+
     // Search conversations
     if (elements.searchConversations) {
         elements.searchConversations.addEventListener('input', handleSearchConversations);
     }
-    
+
     // Send message button
     if (elements.sendMessageButton) {
         elements.sendMessageButton.addEventListener('click', handleSendMessage);
     }
-    
+
     // Message input (send on Enter)
     if (elements.messageInput) {
         elements.messageInput.addEventListener('keydown', (e) => {
@@ -80,12 +92,12 @@ function setupEventListeners() {
             }
         });
     }
-    
+
     // User search
     if (elements.userSearch) {
         elements.userSearch.addEventListener('input', handleUserSearch);
     }
-    
+
     // Close modal buttons
     document.querySelectorAll('.close-button').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -95,7 +107,7 @@ function setupEventListeners() {
             }
         });
     });
-    
+
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
@@ -108,7 +120,7 @@ function setupEventListeners() {
 async function loadConversations() {
     try {
         const result = await messagesModule.getConversations();
-        
+
         if (result.success) {
             appState.conversations = result.conversations;
             renderConversations();
@@ -123,7 +135,7 @@ async function loadConversations() {
 // Render conversations
 function renderConversations() {
     if (!elements.conversationsList) return;
-    
+
     if (appState.conversations.length === 0) {
         elements.conversationsList.innerHTML = `
             <div class="empty-state">
@@ -133,19 +145,19 @@ function renderConversations() {
         `;
         return;
     }
-    
+
     elements.conversationsList.innerHTML = '';
-    
+
     appState.conversations.forEach(conversation => {
         const conversationItem = document.createElement('div');
         conversationItem.className = 'conversation-item';
         if (appState.currentConversation && appState.currentConversation.otherParticipantId === conversation.otherParticipantId) {
             conversationItem.classList.add('active');
         }
-        
+
         // Format time
         const timeString = formatTime(conversation.lastMessageTime);
-        
+
         conversationItem.innerHTML = `
             <img src="${conversation.otherParticipantPhoto || './assets/images/default-avatar.png'}" alt="${conversation.otherParticipantName}" class="conversation-avatar">
             <div class="conversation-info">
@@ -157,11 +169,11 @@ function renderConversations() {
                 ${conversation.unreadCount ? `<div class="unread-badge">${conversation.unreadCount}</div>` : ''}
             </div>
         `;
-        
+
         conversationItem.addEventListener('click', () => {
             loadConversation(conversation);
         });
-        
+
         elements.conversationsList.appendChild(conversationItem);
     });
 }
@@ -169,22 +181,22 @@ function renderConversations() {
 // Format time for display
 function formatTime(timestamp) {
     if (!timestamp) return '';
-    
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
     const now = new Date();
     const diff = now - date;
-    
+
     // Less than 24 hours ago
     if (diff < 24 * 60 * 60 * 1000) {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-    
+
     // Less than 7 days ago
     if (diff < 7 * 24 * 60 * 60 * 1000) {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         return days[date.getDay()];
     }
-    
+
     // More than 7 days ago
     return date.toLocaleDateString();
 }
@@ -192,11 +204,11 @@ function formatTime(timestamp) {
 // Load a conversation
 async function loadConversation(conversation) {
     appState.currentConversation = conversation;
-    
+
     // Update UI
     elements.emptyChat.style.display = 'none';
     elements.chatContent.style.display = 'flex';
-    
+
     // Update header
     elements.chatHeader.innerHTML = `
         <img src="${conversation.otherParticipantPhoto || './assets/images/default-avatar.png'}" alt="${conversation.otherParticipantName}" class="chat-header-avatar">
@@ -205,10 +217,10 @@ async function loadConversation(conversation) {
             <div class="chat-header-status">Active now</div>
         </div>
     `;
-    
+
     // Clear messages
     elements.chatMessages.innerHTML = '<div class="loading">Loading messages...</div>';
-    
+
     // Load messages
     try {
         // Unsubscribe from previous listener
@@ -216,7 +228,7 @@ async function loadConversation(conversation) {
             appState.messageListener();
             appState.messageListener = null;
         }
-        
+
         // Subscribe to messages
         appState.messageListener = messagesModule.subscribeToMessages(
             conversation.otherParticipantId,
@@ -225,12 +237,12 @@ async function loadConversation(conversation) {
     } catch (error) {
         showError('Error loading messages: ' + error.message);
     }
-    
+
     // Update active conversation in the list
     document.querySelectorAll('.conversation-item').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     document.querySelectorAll('.conversation-item').forEach(item => {
         const name = item.querySelector('.conversation-name').textContent;
         if (name === conversation.otherParticipantName) {
@@ -252,7 +264,7 @@ function handleMessagesUpdate(result) {
 // Render messages
 function renderMessages() {
     if (!elements.chatMessages) return;
-    
+
     if (appState.messages.length === 0) {
         elements.chatMessages.innerHTML = `
             <div class="empty-state">
@@ -262,16 +274,16 @@ function renderMessages() {
         `;
         return;
     }
-    
+
     elements.chatMessages.innerHTML = '';
-    
+
     let lastDate = null;
-    
+
     appState.messages.forEach(message => {
         // Add date separator if needed
         const messageDate = message.createdAt.toDate ? message.createdAt.toDate() : new Date(message.createdAt.seconds * 1000);
         const messageDay = messageDate.toDateString();
-        
+
         if (lastDate !== messageDay) {
             const dateSeparator = document.createElement('div');
             dateSeparator.className = 'date-separator';
@@ -279,21 +291,21 @@ function renderMessages() {
             elements.chatMessages.appendChild(dateSeparator);
             lastDate = messageDay;
         }
-        
+
         const messageElement = document.createElement('div');
         messageElement.className = `chat-message ${message.isFromMe ? 'sent' : 'received'}`;
-        
+
         const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
+
         messageElement.innerHTML = `
             <div class="message-content">${message.text}</div>
             ${message.attachmentUrl ? `<img src="${message.attachmentUrl}" alt="Attachment" class="message-attachment">` : ''}
             <div class="message-time">${timeString}</div>
         `;
-        
+
         elements.chatMessages.appendChild(messageElement);
     });
-    
+
     // Scroll to bottom
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
 }
@@ -303,34 +315,34 @@ function formatDateSeparator(date) {
     const now = new Date();
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === now.toDateString()) {
         return 'Today';
     }
-    
+
     if (date.toDateString() === yesterday.toDateString()) {
         return 'Yesterday';
     }
-    
+
     return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 // Handle send message
 async function handleSendMessage() {
     if (!elements.messageInput || !appState.currentConversation) return;
-    
+
     const messageText = elements.messageInput.value.trim();
     if (!messageText) return;
-    
+
     // Clear input
     elements.messageInput.value = '';
-    
+
     try {
         const result = await messagesModule.sendDirectMessage(
             appState.currentConversation.otherParticipantId,
             messageText
         );
-        
+
         if (!result.success) {
             showError(result.error);
         }
@@ -342,14 +354,14 @@ async function handleSendMessage() {
 // Handle search conversations
 function handleSearchConversations() {
     if (!elements.searchConversations) return;
-    
+
     const searchTerm = elements.searchConversations.value.trim().toLowerCase();
-    
+
     // Clear previous timeout
     if (appState.searchTimeout) {
         clearTimeout(appState.searchTimeout);
     }
-    
+
     // Set new timeout to avoid too many renders
     appState.searchTimeout = setTimeout(() => {
         if (!searchTerm) {
@@ -359,12 +371,12 @@ function handleSearchConversations() {
             });
             return;
         }
-        
+
         // Filter conversations
         document.querySelectorAll('.conversation-item').forEach(item => {
             const name = item.querySelector('.conversation-name').textContent.toLowerCase();
             const preview = item.querySelector('.conversation-preview').textContent.toLowerCase();
-            
+
             if (name.includes(searchTerm) || preview.includes(searchTerm)) {
                 item.style.display = 'flex';
             } else {
@@ -377,7 +389,7 @@ function handleSearchConversations() {
 // Show new message modal
 function showNewMessageModal() {
     if (!elements.newMessageModal) return;
-    
+
     elements.newMessageModal.style.display = 'flex';
     elements.userSearch.value = '';
     elements.userSearchResults.innerHTML = '';
@@ -387,25 +399,25 @@ function showNewMessageModal() {
 // Handle user search
 function handleUserSearch() {
     if (!elements.userSearch || !elements.userSearchResults) return;
-    
+
     const searchTerm = elements.userSearch.value.trim();
-    
+
     // Clear previous timeout
     if (appState.searchTimeout) {
         clearTimeout(appState.searchTimeout);
     }
-    
+
     // Clear results if search term is empty
     if (!searchTerm) {
         elements.userSearchResults.innerHTML = '';
         return;
     }
-    
+
     // Set new timeout to avoid too many API calls
     appState.searchTimeout = setTimeout(async () => {
         try {
             const result = await messagesModule.searchUsers(searchTerm);
-            
+
             if (result.success) {
                 renderUserSearchResults(result.users);
             } else {
@@ -420,7 +432,7 @@ function handleUserSearch() {
 // Render user search results
 function renderUserSearchResults(users) {
     if (!elements.userSearchResults) return;
-    
+
     if (users.length === 0) {
         elements.userSearchResults.innerHTML = `
             <div class="empty-state">
@@ -430,13 +442,13 @@ function renderUserSearchResults(users) {
         `;
         return;
     }
-    
+
     elements.userSearchResults.innerHTML = '';
-    
+
     users.forEach(user => {
         const userItem = document.createElement('div');
         userItem.className = 'user-search-item';
-        
+
         userItem.innerHTML = `
             <img src="${user.photoURL || './assets/images/default-avatar.png'}" alt="${user.displayName}" class="user-search-avatar">
             <div class="user-search-info">
@@ -444,11 +456,11 @@ function renderUserSearchResults(users) {
                 <div class="user-search-email">${user.email}</div>
             </div>
         `;
-        
+
         userItem.addEventListener('click', () => {
             startConversation(user);
         });
-        
+
         elements.userSearchResults.appendChild(userItem);
     });
 }
@@ -457,12 +469,12 @@ function renderUserSearchResults(users) {
 async function startConversation(user) {
     // Close the modal
     elements.newMessageModal.style.display = 'none';
-    
+
     // Check if conversation already exists
     const existingConversation = appState.conversations.find(
         conv => conv.otherParticipantId === user.id
     );
-    
+
     if (existingConversation) {
         // Load existing conversation
         loadConversation(existingConversation);
@@ -476,13 +488,13 @@ async function startConversation(user) {
             lastMessageTime: new Date(),
             isFromMe: true
         };
-        
+
         // Add to conversations array
         appState.conversations.unshift(newConversation);
-        
+
         // Render conversations
         renderConversations();
-        
+
         // Load the new conversation
         loadConversation(newConversation);
     }
@@ -491,15 +503,15 @@ async function startConversation(user) {
 // Show error message
 function showError(message) {
     console.error(message);
-    
+
     // Create error toast
     const errorToast = document.createElement('div');
     errorToast.className = 'error-toast';
     errorToast.textContent = message;
-    
+
     // Add to body
     document.body.appendChild(errorToast);
-    
+
     // Remove after 5 seconds
     setTimeout(() => {
         errorToast.remove();

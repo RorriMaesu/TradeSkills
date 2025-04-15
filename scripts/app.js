@@ -1646,6 +1646,12 @@ async function showMessagesSection() {
     const isGitHubPages = window.location.hostname.includes('github.io');
     const repoPath = isGitHubPages ? '/TradeSkills' : '';
 
+    // Check if we're already on the messages page
+    if (window.location.pathname.includes('messages.html')) {
+        console.log('Already on messages page, not redirecting');
+        return;
+    }
+
     // Redirect to the messages.html page with the correct path
     window.location.href = `${repoPath}/messages.html`;
 }
@@ -1655,6 +1661,12 @@ async function showForumsSection() {
     // Check if we're on GitHub Pages
     const isGitHubPages = window.location.hostname.includes('github.io');
     const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Check if we're already on the forums page
+    if (window.location.pathname.includes('forums.html')) {
+        console.log('Already on forums page, not redirecting');
+        return;
+    }
 
     // Redirect to the forums.html page with the correct path
     window.location.href = `${repoPath}/forums.html`;
@@ -1674,6 +1686,13 @@ async function showForumCategorySection() {
     const isGitHubPages = window.location.hostname.includes('github.io');
     const repoPath = isGitHubPages ? '/TradeSkills' : '';
 
+    // Check if we're already on the forum category page with the correct ID
+    if (window.location.pathname.includes('forum-category.html') &&
+        window.location.search.includes(`id=${categoryId}`)) {
+        console.log('Already on forum category page with correct ID, not redirecting');
+        return;
+    }
+
     // Redirect to the forum-category.html page with the category ID
     window.location.href = `${repoPath}/forum-category.html?id=${categoryId}`;
 }
@@ -1691,6 +1710,13 @@ async function showForumPostSection() {
     // Check if we're on GitHub Pages
     const isGitHubPages = window.location.hostname.includes('github.io');
     const repoPath = isGitHubPages ? '/TradeSkills' : '';
+
+    // Check if we're already on the forum post page with the correct ID
+    if (window.location.pathname.includes('forum-post.html') &&
+        window.location.search.includes(`id=${postId}`)) {
+        console.log('Already on forum post page with correct ID, not redirecting');
+        return;
+    }
 
     // Redirect to the forum-post.html page with the post ID
     window.location.href = `${repoPath}/forum-post.html?id=${postId}`;

@@ -16,25 +16,37 @@ const state = {
 // DOM elements that will be used across functions
 const elements = {};
 
+// Flag to track initialization
+let isInitialized = false;
+
 // Initialize the forums UI
 export async function initForumsUI() {
+    // Prevent double initialization
+    if (isInitialized) {
+        console.log('Forums UI already initialized, skipping...');
+        return;
+    }
+
     console.log('Initializing forums UI...');
-    
+
     // Set up auth state change listener
     onAuthStateChanged(auth, handleAuthStateChanged);
-    
+
     // Cache common DOM elements
     cacheElements();
-    
+
     // Determine current page
     detectCurrentPage();
-    
+
     // Set up event listeners
     setupEventListeners();
-    
+
     // Initialize UI based on current page
     await initializePageContent();
-    
+
+    // Mark as initialized
+    isInitialized = true;
+
     console.log('Forums UI initialized');
 }
 
@@ -48,20 +60,20 @@ function handleAuthStateChanged(user) {
 function updateUIForAuthState() {
     // Show/hide elements based on auth state
     const isLoggedIn = !!state.currentUser;
-    
+
     // Update create buttons visibility
     if (elements.createCategoryButton) {
         elements.createCategoryButton.style.display = isLoggedIn ? 'block' : 'none';
     }
-    
+
     if (elements.createPostButton) {
         elements.createPostButton.style.display = isLoggedIn ? 'block' : 'none';
     }
-    
+
     // Update comment form visibility
     if (elements.commentForm) {
         elements.commentForm.style.display = isLoggedIn ? 'block' : 'none';
-        
+
         if (!isLoggedIn && elements.commentInput) {
             elements.commentInput.placeholder = 'Please log in to comment';
         } else if (elements.commentInput) {
@@ -74,7 +86,7 @@ function updateUIForAuthState() {
 function cacheElements() {
     // Common elements across all pages
     elements.mainContent = document.getElementById('main-content');
-    
+
     // Forums main page elements
     elements.categoryList = document.getElementById('category-list');
     elements.recentActivityList = document.getElementById('recent-activity-list');
@@ -85,7 +97,7 @@ function cacheElements() {
     elements.categoryDescription = document.getElementById('category-description');
     elements.cancelCategoryButton = document.getElementById('cancel-category-button');
     elements.forumsSearchInput = document.getElementById('forums-search-input');
-    
+
     // Forum category page elements
     elements.categoryHeader = document.getElementById('category-header');
     elements.postsList = document.getElementById('posts-list');
@@ -97,7 +109,7 @@ function cacheElements() {
     elements.categoryId = document.getElementById('category-id');
     elements.cancelPostButton = document.getElementById('cancel-post-button');
     elements.postsSearchInput = document.getElementById('posts-search-input');
-    
+
     // Forum post page elements
     elements.postDetail = document.getElementById('post-detail');
     elements.commentForm = document.getElementById('comment-form');
@@ -107,7 +119,7 @@ function cacheElements() {
     elements.categoryLink = document.getElementById('category-link');
     elements.postTitleBreadcrumb = document.getElementById('post-title-breadcrumb');
     elements.commentsSortSelect = document.getElementById('comments-sort-select');
-    
+
     // Modal close buttons
     const closeButtons = document.querySelectorAll('.close-button');
     closeButtons.forEach(button => {
@@ -123,7 +135,7 @@ function cacheElements() {
 // Detect which forum page we're on
 function detectCurrentPage() {
     const path = window.location.pathname;
-    
+
     if (path.includes('forum-post.html')) {
         state.currentPage = 'post';
         const urlParams = new URLSearchParams(window.location.search);
@@ -135,7 +147,7 @@ function detectCurrentPage() {
     } else {
         state.currentPage = 'forums';
     }
-    
+
     console.log(`Current page: ${state.currentPage}`);
 }
 
@@ -166,17 +178,17 @@ function setupForumsPageEventListeners() {
             elements.createCategoryModal.style.display = 'block';
         });
     }
-    
+
     if (elements.createCategoryForm) {
         elements.createCategoryForm.addEventListener('submit', handleCreateCategory);
     }
-    
+
     if (elements.cancelCategoryButton) {
         elements.cancelCategoryButton.addEventListener('click', () => {
             elements.createCategoryModal.style.display = 'none';
         });
     }
-    
+
     if (elements.forumsSearchInput) {
         elements.forumsSearchInput.addEventListener('input', handleSearchCategories);
     }
@@ -190,26 +202,26 @@ function setupCategoryPageEventListeners() {
                 alert('Please log in to create a post');
                 return;
             }
-            
+
             // Set the category ID in the hidden input
             if (elements.categoryId) {
                 elements.categoryId.value = state.currentCategoryId;
             }
-            
+
             elements.createPostModal.style.display = 'block';
         });
     }
-    
+
     if (elements.createPostForm) {
         elements.createPostForm.addEventListener('submit', handleCreatePost);
     }
-    
+
     if (elements.cancelPostButton) {
         elements.cancelPostButton.addEventListener('click', () => {
             elements.createPostModal.style.display = 'none';
         });
     }
-    
+
     if (elements.postsSearchInput) {
         elements.postsSearchInput.addEventListener('input', handleSearchPosts);
     }
@@ -220,7 +232,7 @@ function setupPostPageEventListeners() {
     if (elements.submitCommentButton) {
         elements.submitCommentButton.addEventListener('click', handleSubmitComment);
     }
-    
+
     if (elements.commentInput) {
         elements.commentInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -229,7 +241,7 @@ function setupPostPageEventListeners() {
             }
         });
     }
-    
+
     if (elements.commentsSortSelect) {
         elements.commentsSortSelect.addEventListener('change', handleSortComments);
     }
@@ -254,19 +266,19 @@ async function initializePageContent() {
 async function loadForumsPageContent() {
     try {
         state.isLoading = true;
-        
+
         // Load categories
         const categoriesResult = await forumsModule.getCategories();
-        
+
         if (categoriesResult.success) {
             renderCategories(categoriesResult.categories);
         } else {
             showError(elements.categoryList, categoriesResult.error);
         }
-        
+
         // Load recent activity
         const activityResult = await forumsModule.getRecentActivity();
-        
+
         if (activityResult.success) {
             renderRecentActivity(activityResult.activity);
         } else {
@@ -284,25 +296,25 @@ async function loadForumsPageContent() {
 async function loadCategoryPageContent() {
     try {
         state.isLoading = true;
-        
+
         if (!state.currentCategoryId) {
             window.location.href = 'forums.html';
             return;
         }
-        
+
         // Load category details
         const categoryDoc = await forumsModule.getCategory(state.currentCategoryId);
-        
+
         if (!categoryDoc.success) {
             showError(elements.mainContent, 'Category not found');
             return;
         }
-        
+
         const category = categoryDoc.category;
-        
+
         // Update page title
         document.title = `${category.name} | TradeSkills Forums`;
-        
+
         // Update category header
         if (elements.categoryHeader) {
             elements.categoryHeader.innerHTML = `
@@ -310,10 +322,10 @@ async function loadCategoryPageContent() {
                 <p class="category-header-description">${category.description}</p>
             `;
         }
-        
+
         // Load posts for this category
         const postsResult = await forumsModule.getPosts(state.currentCategoryId);
-        
+
         if (postsResult.success) {
             renderPosts(postsResult.posts);
         } else {
@@ -331,44 +343,44 @@ async function loadCategoryPageContent() {
 async function loadPostPageContent() {
     try {
         state.isLoading = true;
-        
+
         if (!state.currentPostId) {
             window.location.href = 'forums.html';
             return;
         }
-        
+
         // Load post details
         const postResult = await forumsModule.getPost(state.currentPostId);
-        
+
         if (!postResult.success) {
             showError(elements.mainContent, 'Post not found');
             return;
         }
-        
+
         const post = postResult.post;
-        
+
         // Update page title
         document.title = `${post.title} | TradeSkills Forums`;
-        
+
         // Update breadcrumb
         if (elements.postTitleBreadcrumb) {
             elements.postTitleBreadcrumb.textContent = post.title;
         }
-        
+
         // Load category details for the breadcrumb
         const categoryResult = await forumsModule.getCategory(post.categoryId);
-        
+
         if (categoryResult.success && elements.categoryLink) {
             elements.categoryLink.textContent = categoryResult.category.name;
             elements.categoryLink.href = `forum-category.html?id=${post.categoryId}`;
         }
-        
+
         // Render post details
         renderPostDetail(post);
-        
+
         // Load comments
         const commentsResult = await forumsModule.getComments(state.currentPostId);
-        
+
         if (commentsResult.success) {
             renderComments(commentsResult.comments);
         } else {
@@ -385,7 +397,7 @@ async function loadPostPageContent() {
 // Render categories list
 function renderCategories(categories) {
     if (!elements.categoryList) return;
-    
+
     if (categories.length === 0) {
         elements.categoryList.innerHTML = `
             <div class="empty-state">
@@ -395,9 +407,9 @@ function renderCategories(categories) {
         `;
         return;
     }
-    
+
     let html = '';
-    
+
     categories.forEach(category => {
         html += `
             <div class="category-card">
@@ -414,14 +426,14 @@ function renderCategories(categories) {
             </div>
         `;
     });
-    
+
     elements.categoryList.innerHTML = html;
 }
 
 // Render recent activity
 function renderRecentActivity(activities) {
     if (!elements.recentActivityList) return;
-    
+
     if (activities.length === 0) {
         elements.recentActivityList.innerHTML = `
             <div class="empty-state">
@@ -430,12 +442,12 @@ function renderRecentActivity(activities) {
         `;
         return;
     }
-    
+
     let html = '';
-    
+
     activities.forEach(activity => {
         const time = formatTimestamp(activity.createdAt);
-        
+
         if (activity.type === 'post') {
             html += `
                 <div class="activity-item">
@@ -444,7 +456,7 @@ function renderRecentActivity(activities) {
                     </div>
                     <div class="activity-content">
                         <p>
-                            <strong>${activity.authorName}</strong> posted 
+                            <strong>${activity.authorName}</strong> posted
                             <a href="forum-post.html?id=${activity.id}">${activity.title}</a>
                         </p>
                         <p class="activity-time">${time}</p>
@@ -459,7 +471,7 @@ function renderRecentActivity(activities) {
                     </div>
                     <div class="activity-content">
                         <p>
-                            <strong>${activity.authorName}</strong> commented on 
+                            <strong>${activity.authorName}</strong> commented on
                             <a href="forum-post.html?id=${activity.postId}">${activity.postTitle}</a>
                         </p>
                         <p class="activity-comment">${activity.content}</p>
@@ -469,14 +481,14 @@ function renderRecentActivity(activities) {
             `;
         }
     });
-    
+
     elements.recentActivityList.innerHTML = html;
 }
 
 // Render posts list
 function renderPosts(posts) {
     if (!elements.postsList) return;
-    
+
     if (posts.length === 0) {
         elements.postsList.innerHTML = `
             <div class="empty-state">
@@ -486,12 +498,12 @@ function renderPosts(posts) {
         `;
         return;
     }
-    
+
     let html = '';
-    
+
     posts.forEach(post => {
         const time = formatTimestamp(post.createdAt);
-        
+
         html += `
             <div class="post-card">
                 <div class="post-info">
@@ -517,16 +529,16 @@ function renderPosts(posts) {
             </div>
         `;
     });
-    
+
     elements.postsList.innerHTML = html;
 }
 
 // Render post detail
 function renderPostDetail(post) {
     if (!elements.postDetail) return;
-    
+
     const time = formatTimestamp(post.createdAt);
-    
+
     const html = `
         <div class="post-header">
             <h1>${post.title}</h1>
@@ -554,17 +566,17 @@ function renderPostDetail(post) {
             </div>
         </div>
     `;
-    
+
     elements.postDetail.innerHTML = html;
-    
+
     // Add event listeners for vote buttons
     const upvoteButton = elements.postDetail.querySelector('.upvote');
     const downvoteButton = elements.postDetail.querySelector('.downvote');
-    
+
     if (upvoteButton) {
         upvoteButton.addEventListener('click', handleVote);
     }
-    
+
     if (downvoteButton) {
         downvoteButton.addEventListener('click', handleVote);
     }
@@ -573,7 +585,7 @@ function renderPostDetail(post) {
 // Render comments
 function renderComments(comments) {
     if (!elements.commentsList) return;
-    
+
     if (comments.length === 0) {
         elements.commentsList.innerHTML = `
             <div class="empty-state">
@@ -583,12 +595,12 @@ function renderComments(comments) {
         `;
         return;
     }
-    
+
     let html = '';
-    
+
     comments.forEach(comment => {
         const time = formatTimestamp(comment.createdAt);
-        
+
         html += `
             <div class="comment">
                 <div class="comment-header">
@@ -616,9 +628,9 @@ function renderComments(comments) {
             </div>
         `;
     });
-    
+
     elements.commentsList.innerHTML = html;
-    
+
     // Add event listeners for vote buttons
     const voteButtons = elements.commentsList.querySelectorAll('.vote-button');
     voteButtons.forEach(button => {
@@ -629,34 +641,34 @@ function renderComments(comments) {
 // Handle creating a new category
 async function handleCreateCategory(e) {
     e.preventDefault();
-    
+
     if (!state.currentUser) {
         alert('You must be logged in to create a category');
         return;
     }
-    
+
     const name = elements.categoryName.value.trim();
     const description = elements.categoryDescription.value.trim();
-    
+
     if (!name || !description) {
         alert('Please fill in all fields');
         return;
     }
-    
+
     try {
         const result = await forumsModule.createCategory(name, description);
-        
+
         if (result.success) {
             // Clear form and hide modal
             elements.createCategoryForm.reset();
             elements.createCategoryModal.style.display = 'none';
-            
+
             // Reload categories
             const categoriesResult = await forumsModule.getCategories();
             if (categoriesResult.success) {
                 renderCategories(categoriesResult.categories);
             }
-            
+
             alert('Category created successfully!');
         } else {
             alert(`Failed to create category: ${result.error}`);
@@ -670,29 +682,29 @@ async function handleCreateCategory(e) {
 // Handle creating a new post
 async function handleCreatePost(e) {
     e.preventDefault();
-    
+
     if (!state.currentUser) {
         alert('You must be logged in to create a post');
         return;
     }
-    
+
     const categoryId = elements.categoryId.value;
     const title = elements.postTitle.value.trim();
     const content = elements.postContent.value.trim();
-    
+
     if (!categoryId || !title || !content) {
         alert('Please fill in all fields');
         return;
     }
-    
+
     try {
         const result = await forumsModule.createPost(categoryId, title, content);
-        
+
         if (result.success) {
             // Clear form and hide modal
             elements.createPostForm.reset();
             elements.createPostModal.style.display = 'none';
-            
+
             // Redirect to the new post
             window.location.href = `forum-post.html?id=${result.postId}`;
         } else {
@@ -710,21 +722,21 @@ async function handleSubmitComment() {
         alert('You must be logged in to comment');
         return;
     }
-    
+
     const content = elements.commentInput.value.trim();
-    
+
     if (!content) {
         alert('Please enter a comment');
         return;
     }
-    
+
     try {
         const result = await forumsModule.addComment(state.currentPostId, content);
-        
+
         if (result.success) {
             // Clear input
             elements.commentInput.value = '';
-            
+
             // Reload comments
             const commentsResult = await forumsModule.getComments(state.currentPostId);
             if (commentsResult.success) {
@@ -745,21 +757,21 @@ async function handleVote(e) {
         alert('You must be logged in to vote');
         return;
     }
-    
+
     const button = e.currentTarget;
     const itemId = button.dataset.id;
     const itemType = button.dataset.type;
     const isUpvote = button.classList.contains('upvote');
-    
+
     try {
         let result;
-        
+
         if (isUpvote) {
             result = await forumsModule.upvote(itemId, itemType);
         } else {
             result = await forumsModule.downvote(itemId, itemType);
         }
-        
+
         if (result.success) {
             // Reload the current page to reflect the updated vote counts
             if (state.currentPage === 'post') {
@@ -778,11 +790,11 @@ async function handleVote(e) {
 function handleSearchCategories() {
     const searchTerm = elements.forumsSearchInput.value.toLowerCase().trim();
     const categoryCards = elements.categoryList.querySelectorAll('.category-card');
-    
+
     categoryCards.forEach(card => {
         const title = card.querySelector('h3').textContent.toLowerCase();
         const description = card.querySelector('p').textContent.toLowerCase();
-        
+
         if (title.includes(searchTerm) || description.includes(searchTerm)) {
             card.style.display = 'flex';
         } else {
@@ -795,10 +807,10 @@ function handleSearchCategories() {
 function handleSearchPosts() {
     const searchTerm = elements.postsSearchInput.value.toLowerCase().trim();
     const postCards = elements.postsList.querySelectorAll('.post-card');
-    
+
     postCards.forEach(card => {
         const title = card.querySelector('h3').textContent.toLowerCase();
-        
+
         if (title.includes(searchTerm)) {
             card.style.display = 'flex';
         } else {
@@ -810,15 +822,15 @@ function handleSearchPosts() {
 // Handle sorting comments
 async function handleSortComments() {
     if (!elements.commentsSortSelect || !state.currentPostId) return;
-    
+
     const sortBy = elements.commentsSortSelect.value;
-    
+
     try {
         const commentsResult = await forumsModule.getComments(state.currentPostId);
-        
+
         if (commentsResult.success) {
             let comments = commentsResult.comments;
-            
+
             // Sort comments based on selected option
             switch (sortBy) {
                 case 'newest':
@@ -843,7 +855,7 @@ async function handleSortComments() {
                     });
                     break;
             }
-            
+
             renderComments(comments);
         }
     } catch (error) {
@@ -854,7 +866,7 @@ async function handleSortComments() {
 // Format timestamp for display
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Unknown date';
-    
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
     const now = new Date();
     const diffMs = now - date;
@@ -862,7 +874,7 @@ function formatTimestamp(timestamp) {
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
-    
+
     if (diffSec < 60) {
         return 'just now';
     } else if (diffMin < 60) {
@@ -879,7 +891,7 @@ function formatTimestamp(timestamp) {
 // Show error message in a container
 function showError(container, message) {
     if (!container) return;
-    
+
     container.innerHTML = `
         <div class="error-message">
             <i class="fas fa-exclamation-circle"></i>
