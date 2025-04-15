@@ -325,29 +325,18 @@ export async function getPartners(options = {}) {
 
         const { pageSize = 20, lastDoc = null } = options;
         
-        // Query for partnerships where user is either sender or recipient and status is accepted
+        // Create queries without orderBy to avoid index requirement
         let senderQuery = query(
             collection(db, 'partnerships'),
             where('senderId', '==', user.uid),
-            where('status', '==', 'accepted'),
-            orderBy('updatedAt', 'desc')
+            where('status', '==', 'accepted')
         );
         
         let recipientQuery = query(
             collection(db, 'partnerships'),
             where('recipientId', '==', user.uid),
-            where('status', '==', 'accepted'),
-            orderBy('updatedAt', 'desc')
+            where('status', '==', 'accepted')
         );
-        
-        // Apply pagination if lastDoc is provided
-        if (lastDoc) {
-            senderQuery = query(senderQuery, startAfter(lastDoc), limit(pageSize));
-            recipientQuery = query(recipientQuery, startAfter(lastDoc), limit(pageSize));
-        } else {
-            senderQuery = query(senderQuery, limit(pageSize));
-            recipientQuery = query(recipientQuery, limit(pageSize));
-        }
         
         // Execute queries
         const [senderSnapshot, recipientSnapshot] = await Promise.all([
@@ -382,15 +371,25 @@ export async function getPartners(options = {}) {
             });
         });
         
-        // Sort by updatedAt (descending)
+        // Sort by updatedAt (descending) - do this client-side instead of in the query
         partners.sort((a, b) => {
             const dateA = a.updatedAt?.seconds || 0;
             const dateB = b.updatedAt?.seconds || 0;
             return dateB - dateA;
         });
         
-        // Limit to pageSize
-        const limitedPartners = partners.slice(0, pageSize);
+        // Implement pagination manually since we're not using orderBy with limit in the query
+        let startIndex = 0;
+        if (lastDoc) {
+            // Find the index of lastDoc
+            const lastDocIndex = partners.findIndex(p => p.id === lastDoc.id);
+            if (lastDocIndex !== -1) {
+                startIndex = lastDocIndex + 1;
+            }
+        }
+        
+        // Slice the array for pagination
+        const limitedPartners = partners.slice(startIndex, startIndex + pageSize);
         
         // Get the last document for pagination
         const lastVisible = limitedPartners.length > 0 ? 
@@ -400,7 +399,7 @@ export async function getPartners(options = {}) {
             success: true,
             partners: limitedPartners,
             lastVisible,
-            hasMore: partners.length > pageSize
+            hasMore: startIndex + pageSize < partners.length
         };
     } catch (error) {
         console.error('Error getting partners:', error);
@@ -423,11 +422,11 @@ export async function getPartnerRequests() {
         }
         
         // Query for pending requests where user is the recipient
+        // Removed orderBy to avoid requiring a composite index
         const requestsQuery = query(
             collection(db, 'partnerships'),
             where('recipientId', '==', user.uid),
-            where('status', '==', 'pending'),
-            orderBy('createdAt', 'desc')
+            where('status', '==', 'pending')
         );
         
         // Execute query
@@ -440,6 +439,13 @@ export async function getPartnerRequests() {
                 id: doc.id,
                 ...doc.data()
             });
+        });
+        
+        // Sort by createdAt (descending) - do this client-side instead of in the query
+        requests.sort((a, b) => {
+            const dateA = a.createdAt?.seconds || 0;
+            const dateB = b.createdAt?.seconds || 0;
+            return dateB - dateA;
         });
         
         return {
@@ -467,11 +473,11 @@ export async function getSentPartnerRequests() {
         }
         
         // Query for pending requests where user is the sender
+        // Removed orderBy to avoid requiring a composite index
         const requestsQuery = query(
             collection(db, 'partnerships'),
             where('senderId', '==', user.uid),
-            where('status', '==', 'pending'),
-            orderBy('createdAt', 'desc')
+            where('status', '==', 'pending')
         );
         
         // Execute query
@@ -484,6 +490,13 @@ export async function getSentPartnerRequests() {
                 id: doc.id,
                 ...doc.data()
             });
+        });
+        
+        // Sort by createdAt (descending) - do this client-side instead of in the query
+        requests.sort((a, b) => {
+            const dateA = a.createdAt?.seconds || 0;
+            const dateB = b.createdAt?.seconds || 0;
+            return dateB - dateA;
         });
         
         return {
