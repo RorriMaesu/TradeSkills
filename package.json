@@ -1,0 +1,14 @@
+{
+  "name": "tradeskills",
+  "version": "1.0.0",
+  "description": "A platform for listing, trading, and exchanging skills and services",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 8000 -c-1"
+  },
+  "author": "RorriMaesu",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
