@@ -619,13 +619,14 @@ export async function getRecentActivity(limitCount = 10) {
 
         // For each comment, get the associated post title
         const commentPromises = [];
-        commentsSnapshot.forEach((doc) => {
-            const data = doc.data();
-            const promise = getDoc(doc(db, 'forumPosts', data.postId)).then(postDoc => {
+        commentsSnapshot.forEach((commentDoc) => {
+            const data = commentDoc.data();
+            const postDocRef = doc(db, 'forumPosts', data.postId);
+            const promise = getDoc(postDocRef).then(postDoc => {
                 if (postDoc.exists()) {
                     const postData = postDoc.data();
                     recentActivity.push({
-                        id: doc.id,
+                        id: commentDoc.id,
                         type: 'comment',
                         postId: data.postId,
                         postTitle: postData.title,
