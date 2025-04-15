@@ -33,14 +33,17 @@ export async function createListing(listingData, imageFile) {
                 const uploadResult = await uploadListingImage(imageFile);
 
                 if (uploadResult.success) {
-                    // Handle both Firebase URLs and local Base64 images
-                    enhancedListingData.imageUrl = uploadResult.imageUrl;
+                    // Only set imageUrl for non-Firestore images
+                    // For Firestore images, we'll use thumbnailUrl instead
 
                     // Handle different types of image storage
                     if (uploadResult.isFirestoreImage) {
+                        // Store only the reference to the image, not the actual image data
                         enhancedListingData.imageId = uploadResult.imageId;
                         enhancedListingData.firestoreId = uploadResult.firestoreId;
                         enhancedListingData.isFirestoreImage = true;
+                        // Store a small thumbnail for immediate display
+                        enhancedListingData.thumbnailUrl = uploadResult.thumbnailUrl;
                         enhancedListingData.imageUploadNote = 'Image stored in Firestore for GitHub Pages compatibility';
                         console.log('Firestore image ID stored:', uploadResult.imageId, 'Doc ID:', uploadResult.firestoreId);
                     } else if (uploadResult.isLocalImage) {
@@ -49,6 +52,8 @@ export async function createListing(listingData, imageFile) {
                         enhancedListingData.imageUploadNote = 'Image stored locally in your browser';
                         console.log('Local image ID stored:', uploadResult.imageId);
                     } else {
+                        // For Firebase Storage, store the URL
+                        enhancedListingData.imageUrl = uploadResult.imageUrl;
                         console.log('Image uploaded successfully to Firebase Storage, URL set:', uploadResult.imageUrl);
                     }
                 } else {
@@ -180,15 +185,20 @@ export async function updateListing(listingId, listingData, imageFile) {
                 const uploadResult = await uploadListingImage(imageFile);
 
                 if (uploadResult.success) {
-                    // Set the new image URL
-                    updateData.imageUrl = uploadResult.imageUrl;
+                    // Only set imageUrl for non-Firestore images
+                    // For Firestore images, we'll handle it in the specific case below
 
                     // Handle different types of image storage
                     if (uploadResult.isFirestoreImage) {
+                        // Store only the reference to the image, not the actual image data
                         updateData.imageId = uploadResult.imageId;
                         updateData.firestoreId = uploadResult.firestoreId;
                         updateData.isFirestoreImage = true;
                         updateData.isLocalImage = false; // Clear any local image flag
+                        // Store a small thumbnail for immediate display
+                        updateData.thumbnailUrl = uploadResult.thumbnailUrl;
+                        // Remove any previous imageUrl to avoid document size issues
+                        updateData.imageUrl = null;
                         updateData.imageUploadNote = 'Image stored in Firestore for GitHub Pages compatibility';
                         console.log('Firestore image ID stored for update:', uploadResult.imageId, 'Doc ID:', uploadResult.firestoreId);
                     } else if (uploadResult.isLocalImage) {
@@ -196,6 +206,8 @@ export async function updateListing(listingId, listingData, imageFile) {
                         updateData.isLocalImage = true;
                         updateData.isFirestoreImage = false; // Clear any Firestore image flag
                         updateData.firestoreId = null; // Clear any Firestore ID
+                        updateData.thumbnailUrl = null; // Clear any thumbnail
+                        updateData.imageUrl = uploadResult.imageUrl; // Set the full image URL for local storage
                         updateData.imageUploadNote = 'Image stored locally in your browser';
                         console.log('Local image ID stored for update:', uploadResult.imageId);
                     } else {
@@ -204,6 +216,8 @@ export async function updateListing(listingId, listingData, imageFile) {
                         updateData.isLocalImage = false;
                         updateData.isFirestoreImage = false;
                         updateData.firestoreId = null;
+                        updateData.thumbnailUrl = null; // Clear any thumbnail
+                        updateData.imageUrl = uploadResult.imageUrl; // Set the Firebase Storage URL
                         // Remove any previous image upload note
                         if (listingDoc.data().imageUploadNote) {
                             updateData.imageUploadNote = null; // This will remove the field in Firestore
@@ -506,11 +520,11 @@ async function processImageForGitHubPages(imageFile, userId) {
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d');
 
-                            // Calculate new dimensions (max 600px width/height for Firestore storage)
+                            // Calculate new dimensions (max 400px width/height for Firestore storage)
                             const { width: originalWidth, height: originalHeight } = img;
                             let width = originalWidth;
                             let height = originalHeight;
-                            const maxSize = 600; // Smaller max size for Firestore
+                            const maxSize = 400; // Smaller max size for Firestore
 
                             if (width > height && width > maxSize) {
                                 height = Math.round(height * (maxSize / width));
@@ -526,7 +540,7 @@ async function processImageForGitHubPages(imageFile, userId) {
                             // Draw and compress
                             ctx.drawImage(img, 0, 0, width, height);
                             // Use higher compression (lower quality) for Firestore storage
-                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); // 50% quality
 
                             // Extract just the base64 data without the data URL prefix
                             const base64Data = compressedBase64.split(',')[1];
@@ -553,13 +567,16 @@ async function processImageForGitHubPages(imageFile, userId) {
                                 const docRef = await addDoc(imagesRef, imageData);
 
                                 console.log('Image stored in Firestore with ID:', docRef.id);
+                                console.log('Compressed image size:', base64Data.length, 'bytes');
 
-                                // Return success with the image data URL for immediate display
+                                // Return success with image reference info, but NOT the actual base64 data
+                                // This prevents the listing document from exceeding size limits
                                 resolve({
                                     success: true,
                                     imageId: imageId,
                                     firestoreId: docRef.id,
-                                    imageUrl: `data:image/jpeg;base64,${base64Data}`,
+                                    // Just store a thumbnail version for immediate display
+                                    thumbnailUrl: compressedBase64,
                                     isFirestoreImage: true
                                 });
                             } catch (firestoreError) {

@@ -1051,7 +1051,7 @@ async function loadMarketplaceListings() {
                 listingsContainer.innerHTML = listings.map(listing => `
                     <div class="marketplace-card" data-id="${listing.id}">
                         ${listing.isFirestoreImage && listing.imageId ?
-                            `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                            `<img src="${listing.thumbnailUrl || './assets/images/placeholder.png'}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
                             listing.isLocalImage && listing.imageId ?
                             `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                             `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
@@ -1120,12 +1120,13 @@ async function showListingDetailSection() {
                             <div class="listing-detail">
                                 <div class="listing-image">
                                     ${listing.isFirestoreImage && listing.imageId ?
-                                        `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                                        `<img src="${listing.thumbnailUrl || './assets/images/placeholder.png'}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
                                         listing.isLocalImage && listing.imageId ?
                                         `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                                         `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
                                     }
                                     ${listing.imageUploadNote ? `<div class="form-note ${listing.isFirestoreImage ? 'success' : listing.isLocalImage ? 'info' : 'warning'}">${listing.imageUploadNote}</div>` : ''}
+                                    ${listing.isFirestoreImage ? `<div class="image-loading-indicator">Loading full-resolution image...</div>` : ''}
                                 </div>
                                 <div class="listing-info">
                                     <h1>${listing.title}</h1>
@@ -1204,6 +1205,51 @@ async function showListingDetailSection() {
                             }
                         });
                     }
+                }
+
+                // Load full-resolution image for Firestore images
+                if (listing.isFirestoreImage && listing.firestoreId) {
+                    const loadFullImage = async () => {
+                        try {
+                            console.log('Loading full-resolution image from Firestore...');
+                            const fullImageData = await listingsModule.getFirestoreImageByDocId(listing.firestoreId);
+
+                            if (fullImageData) {
+                                // Find the image element and update its src
+                                const imgElement = document.querySelector('.firestore-image[data-firestore-id="' + listing.firestoreId + '"]');
+                                if (imgElement) {
+                                    imgElement.src = fullImageData;
+                                    console.log('Full-resolution image loaded successfully');
+
+                                    // Remove the loading indicator
+                                    const loadingIndicator = document.querySelector('.image-loading-indicator');
+                                    if (loadingIndicator) {
+                                        loadingIndicator.textContent = 'Full-resolution image loaded';
+                                        setTimeout(() => {
+                                            if (loadingIndicator.parentNode) {
+                                                loadingIndicator.parentNode.removeChild(loadingIndicator);
+                                            }
+                                        }, 2000);
+                                    }
+                                }
+                            } else {
+                                console.warn('Failed to load full-resolution image');
+                                const loadingIndicator = document.querySelector('.image-loading-indicator');
+                                if (loadingIndicator) {
+                                    loadingIndicator.textContent = 'Could not load full-resolution image';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error loading full-resolution image:', error);
+                            const loadingIndicator = document.querySelector('.image-loading-indicator');
+                            if (loadingIndicator) {
+                                loadingIndicator.textContent = 'Error loading full-resolution image';
+                            }
+                        }
+                    };
+
+                    // Start loading the full image after a short delay
+                    setTimeout(loadFullImage, 500);
                 }
 
                 // Reconnect navigation event listeners
@@ -1512,7 +1558,7 @@ async function showDashboardSection() {
                                     listingsResult.listings.map(listing => `
                                         <div class="listing-card" data-id="${listing.id}">
                                             ${listing.isFirestoreImage && listing.imageId ?
-                                                `<img src="${listing.imageUrl}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
+                                                `<img src="${listing.thumbnailUrl || './assets/images/placeholder.png'}" alt="${listing.title}" class="firestore-image" data-image-id="${listing.imageId}" data-firestore-id="${listing.firestoreId}">` :
                                                 listing.isLocalImage && listing.imageId ?
                                                 `<img src="${listing.imageUrl}" alt="${listing.title}" class="local-image" data-image-id="${listing.imageId}">` :
                                                 `<img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">`
