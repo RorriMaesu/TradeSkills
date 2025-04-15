@@ -1270,6 +1270,7 @@ function showCreateListingSection() {
         if (createListingForm) {
             createListingForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                console.log('Create listing form submitted');
 
                 const title = document.getElementById('listing-title').value;
                 const category = document.getElementById('listing-category').value;
@@ -1278,8 +1279,20 @@ function showCreateListingSection() {
                 const imageInput = document.getElementById('listing-image');
                 const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
 
+                // Validate form data
+                if (!title || !category || !description || !lookingFor) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+
                 try {
                     setLoading(true);
+                    showMessage('Creating your listing... Please wait.');
+
+                    // Log form data for debugging
+                    console.log('Form data:', { title, category, description, lookingFor });
+                    console.log('Image file:', imageFile ? `${imageFile.name} (${imageFile.size} bytes)` : 'None');
+
                     const result = await listingsModule.createListing({
                         title,
                         category,
@@ -1288,13 +1301,37 @@ function showCreateListingSection() {
                     }, imageFile);
 
                     if (result.success) {
+                        console.log('Listing created successfully with ID:', result.listingId);
                         navigateTo('/dashboard');
-                        showMessage('Listing created successfully');
+                        showMessage('Listing created successfully!');
                     } else {
-                        showError(result.error);
+                        console.error('Error from createListing:', result.error);
+                        showError(result.error || 'Failed to create listing');
                     }
                 } catch (error) {
-                    showError('Error creating listing: ' + error.message);
+                    console.error('Exception in form submission handler:', error);
+                    showError('Error creating listing: ' + (error.message || 'Unknown error'));
+
+                    // Try to create the listing without the image as a fallback
+                    if (imageFile) {
+                        try {
+                            console.log('Attempting to create listing without image as fallback...');
+                            const fallbackResult = await listingsModule.createListing({
+                                title,
+                                category,
+                                description,
+                                lookingFor
+                            }, null);
+
+                            if (fallbackResult.success) {
+                                console.log('Fallback listing creation succeeded');
+                                navigateTo('/dashboard');
+                                showMessage('Listing created successfully, but without the image due to upload issues.');
+                            }
+                        } catch (fallbackError) {
+                            console.error('Fallback attempt also failed:', fallbackError);
+                        }
+                    }
                 } finally {
                     setLoading(false);
                 }
