@@ -116,11 +116,11 @@ export async function getTradeProposals(options = {}) {
 
         const { role = 'both', status } = options;
 
-        // Handle different query scenarios to avoid index requirements
+        // IMPORTANT: Completely avoid using orderBy to prevent index requirements
+        // We'll do all sorting client-side
         if (role === 'both') {
-            // For 'both', we'll make two separate queries without sorting
-            // and then sort the combined results client-side
             try {
+                // Simple queries with no sorting
                 const proposerQuery = query(
                     collection(db, 'trades'),
                     where('proposerId', '==', user.uid)
@@ -131,30 +131,32 @@ export async function getTradeProposals(options = {}) {
                     where('receiverId', '==', user.uid)
                 );
 
-                const [proposerSnapshot, receiverSnapshot] = await Promise.all([
-                    getDocs(proposerQuery),
-                    getDocs(receiverQuery)
-                ]);
+                // Execute both queries
+                const proposerSnapshot = await getDocs(proposerQuery);
+                const receiverSnapshot = await getDocs(receiverQuery);
 
+                // Process results
                 const trades = [];
 
                 proposerSnapshot.forEach((doc) => {
+                    const data = doc.data();
                     trades.push({
                         id: doc.id,
-                        ...doc.data(),
+                        ...data,
                         role: 'proposer'
                     });
                 });
 
                 receiverSnapshot.forEach((doc) => {
+                    const data = doc.data();
                     trades.push({
                         id: doc.id,
-                        ...doc.data(),
+                        ...data,
                         role: 'receiver'
                     });
                 });
 
-                // Sort by created date (descending)
+                // Sort by created date (descending) - client-side
                 trades.sort((a, b) => {
                     const dateA = a.createdAt?.seconds || 0;
                     const dateB = b.createdAt?.seconds || 0;
@@ -179,48 +181,61 @@ export async function getTradeProposals(options = {}) {
         }
 
         // For single role queries (proposer or receiver)
-        let tradesQuery;
-        if (role === 'proposer') {
-            tradesQuery = query(
-                collection(db, 'trades'),
-                where('proposerId', '==', user.uid)
-            );
-        } else { // role === 'receiver'
-            tradesQuery = query(
-                collection(db, 'trades'),
-                where('receiverId', '==', user.uid)
-            );
-        }
+        try {
+            let tradesQuery;
+            if (role === 'proposer') {
+                // Simple query with no sorting
+                tradesQuery = query(
+                    collection(db, 'trades'),
+                    where('proposerId', '==', user.uid)
+                );
+            } else { // role === 'receiver'
+                // Simple query with no sorting
+                tradesQuery = query(
+                    collection(db, 'trades'),
+                    where('receiverId', '==', user.uid)
+                );
+            }
 
-        // Execute query
-        const snapshot = await getDocs(tradesQuery);
+            // Execute query
+            const snapshot = await getDocs(tradesQuery);
 
-        // Process results
-        const trades = [];
-        snapshot.forEach((doc) => {
-            trades.push({
-                id: doc.id,
-                ...doc.data(),
-                role: role
+            // Process results
+            const trades = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                trades.push({
+                    id: doc.id,
+                    ...data,
+                    role: role
+                });
             });
-        });
 
-        // Sort by created date (descending) - client-side
-        trades.sort((a, b) => {
-            const dateA = a.createdAt?.seconds || 0;
-            const dateB = b.createdAt?.seconds || 0;
-            return dateB - dateA;
-        });
+            // Sort by created date (descending) - client-side
+            trades.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateB - dateA;
+            });
 
-        // Filter by status if specified
-        const filteredTrades = status ? trades.filter(trade => trade.status === status) : trades;
+            // Filter by status if specified
+            const filteredTrades = status ? trades.filter(trade => trade.status === status) : trades;
 
-        return {
-            success: true,
-            trades: filteredTrades
-        };
+            return {
+                success: true,
+                trades: filteredTrades
+            };
+        } catch (error) {
+            console.error('Error getting trade proposals:', error);
+            // Return empty trades array instead of error to avoid breaking the UI
+            return {
+                success: true,
+                trades: [],
+                error: `Failed to get trade proposals: ${error.message}`
+            };
+        }
     } catch (error) {
-        console.error('Error getting trade proposals:', error);
+        console.error('Error in getTradeProposals:', error);
         // Return empty trades array instead of error to avoid breaking the UI
         return {
             success: true,

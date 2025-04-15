@@ -216,26 +216,21 @@ export async function getListings(filters = {}) {
         const { userId, category, status, searchTerm, sortBy, limitCount } = filters;
         let listingsQuery = collection(db, 'listings');
 
-        // Handle different query scenarios to avoid index requirements
+        // IMPORTANT: Avoid using orderBy with where clauses to prevent index requirements
+        // We'll do all sorting client-side instead
         if (userId) {
-            // When filtering by userId, we'll get all user's listings and sort client-side
-            // This avoids the need for a composite index on userId + createdAt
+            // Simple query with just the userId filter
             listingsQuery = query(listingsQuery, where('userId', '==', userId));
         } else if (category) {
-            // When filtering by category, add sorting
-            listingsQuery = query(listingsQuery,
-                where('category', '==', category),
-                orderBy('createdAt', 'desc')
-            );
+            // Simple query with just the category filter
+            listingsQuery = query(listingsQuery, where('category', '==', category));
         } else if (status) {
-            // When filtering by status, add sorting
-            listingsQuery = query(listingsQuery,
-                where('status', '==', status),
-                orderBy('createdAt', 'desc')
-            );
+            // Simple query with just the status filter
+            listingsQuery = query(listingsQuery, where('status', '==', status));
         } else {
-            // No filters, just sort
-            listingsQuery = query(listingsQuery, orderBy('createdAt', 'desc'));
+            // No filters, use a simple collection reference
+            // We'll sort client-side
+            listingsQuery = collection(db, 'listings');
         }
 
         // Apply limit if specified

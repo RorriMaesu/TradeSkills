@@ -1,5 +1,6 @@
 // Import Firebase and module dependencies
-import { auth, onAuthStateChanged } from './firebase-config.js';
+import { auth, onAuthStateChanged, db } from './firebase-config.js';
+import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import * as authModule from './auth.js';
 import * as listingsModule from './listings.js';
 import * as tradesModule from './trades.js';
@@ -1074,22 +1075,44 @@ async function showDashboardSection() {
     try {
         console.log('Loading dashboard for user:', appState.currentUser.uid);
 
-        // Fetch user's listings with error handling
+        // Default empty results
         let listingsResult = { success: true, listings: [] };
+        let sentTradesResult = { success: true, trades: [] };
+        let receivedTradesResult = { success: true, trades: [] };
+
+        // Fetch user's listings with error handling
         try {
-            listingsResult = await listingsModule.getListings({ userId: appState.currentUser.uid });
-            console.log('Listings loaded successfully');
+            // Use a direct query without any sorting to avoid index requirements
+            const listingsRef = collection(db, 'listings');
+            const q = query(listingsRef, where('userId', '==', appState.currentUser.uid));
+            const querySnapshot = await getDocs(q);
+
+            // Process results manually
+            const listings = [];
+            querySnapshot.forEach((doc) => {
+                listings.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            // Sort by createdAt (descending) - client-side
+            listings.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateB - dateA;
+            });
+
+            listingsResult = { success: true, listings };
+            console.log('Listings loaded successfully:', listings.length);
         } catch (listingError) {
             console.error('Error loading listings:', listingError);
             // Continue with empty listings array
         }
 
-        // Initialize trade results with default values
-        let sentTradesResult = { success: true, trades: [] };
-        let receivedTradesResult = { success: true, trades: [] };
-
+        // Fetch user's trade proposals
         try {
-            // Fetch user's trade proposals
+            // Use direct queries without any sorting to avoid index requirements
             sentTradesResult = await tradesModule.getTradeProposals({ role: 'proposer' });
             receivedTradesResult = await tradesModule.getTradeProposals({ role: 'receiver' });
             console.log('Trade proposals loaded successfully');
