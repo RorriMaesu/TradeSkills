@@ -30,13 +30,29 @@ export async function createListing(listingData, imageFile) {
         if (imageFile) {
             try {
                 console.log('Image file provided, attempting to upload...');
-                const imageUrl = await uploadListingImage(imageFile);
-                enhancedListingData.imageUrl = imageUrl;
-                console.log('Image URL set:', imageUrl);
+                const uploadResult = await uploadListingImage(imageFile);
+
+                if (uploadResult.success) {
+                    enhancedListingData.imageUrl = uploadResult.imageUrl;
+                    console.log('Image uploaded successfully, URL set:', uploadResult.imageUrl);
+                } else {
+                    // Upload failed but we have a fallback image
+                    enhancedListingData.imageUrl = uploadResult.imageUrl;
+
+                    // Add a note about the image upload failure to the listing
+                    if (uploadResult.isGitHubPagesError || uploadResult.isCorsError) {
+                        enhancedListingData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions on GitHub Pages';
+                    } else {
+                        enhancedListingData.imageUploadNote = uploadResult.error || 'Image upload failed';
+                    }
+
+                    console.warn('Using placeholder image due to upload failure:', uploadResult.error);
+                }
             } catch (imageError) {
-                console.warn('Error uploading image, continuing with placeholder:', imageError);
+                console.warn('Unexpected error during image upload, using placeholder:', imageError);
                 // Continue with the listing creation even if image upload fails
                 enhancedListingData.imageUrl = './assets/images/placeholder.png';
+                enhancedListingData.imageUploadNote = 'Image upload failed due to an unexpected error';
             }
         } else {
             console.log('No image file provided, using placeholder');
@@ -119,13 +135,33 @@ export async function updateListing(listingId, listingData, imageFile) {
 
                 // Upload the new image
                 console.log('Uploading new image...');
-                const imageUrl = await uploadListingImage(imageFile);
-                updateData.imageUrl = imageUrl;
-                console.log('New image URL set:', imageUrl);
+                const uploadResult = await uploadListingImage(imageFile);
+
+                if (uploadResult.success) {
+                    updateData.imageUrl = uploadResult.imageUrl;
+                    // Remove any previous image upload note if it exists
+                    if (listingDoc.data().imageUploadNote) {
+                        updateData.imageUploadNote = null; // This will remove the field in Firestore
+                    }
+                    console.log('New image uploaded successfully, URL set:', uploadResult.imageUrl);
+                } else {
+                    // Upload failed but we have a fallback image
+                    updateData.imageUrl = uploadResult.imageUrl;
+
+                    // Add a note about the image upload failure to the listing
+                    if (uploadResult.isGitHubPagesError || uploadResult.isCorsError) {
+                        updateData.imageUploadNote = 'Image could not be uploaded due to CORS restrictions on GitHub Pages';
+                    } else {
+                        updateData.imageUploadNote = uploadResult.error || 'Image upload failed';
+                    }
+
+                    console.warn('Using placeholder image due to upload failure:', uploadResult.error);
+                }
             } catch (imageError) {
-                console.warn('Error handling image update, using placeholder:', imageError);
+                console.warn('Unexpected error during image update, using placeholder:', imageError);
                 // Continue with the listing update even if image handling fails
                 updateData.imageUrl = './assets/images/placeholder.png';
+                updateData.imageUploadNote = 'Image upload failed due to an unexpected error';
             }
         }
 
@@ -337,8 +373,18 @@ export async function getListings(filters = {}) {
     }
 }
 
+// Check if we're running on GitHub Pages
+function isGitHubPages() {
+    return window.location.hostname.includes('github.io');
+}
+
 // Upload a listing image to Firebase Storage
 async function uploadListingImage(imageFile) {
+    // Early warning for GitHub Pages environment
+    if (isGitHubPages()) {
+        console.warn('Running on GitHub Pages - image uploads may fail due to CORS restrictions');
+    }
+
     try {
         const user = auth.currentUser;
         const timestamp = Date.now();
@@ -347,31 +393,63 @@ async function uploadListingImage(imageFile) {
 
         console.log('Attempting to upload image to Firebase Storage...');
 
+        // If we're on GitHub Pages, don't even try to upload (known to fail)
+        if (isGitHubPages()) {
+            console.warn('Skipping actual upload attempt on GitHub Pages to avoid CORS errors');
+            return {
+                success: false,
+                imageUrl: './assets/images/placeholder.png',
+                error: 'Image uploads are not supported on GitHub Pages due to CORS restrictions',
+                isGitHubPagesError: true
+            };
+        }
+
         try {
             // Upload the file
             const snapshot = await uploadBytes(storageRef, imageFile);
             console.log('Image uploaded successfully');
 
-            // Get and return the download URL directly
-            return await getDownloadURL(snapshot.ref);
+            // Get the download URL
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            return {
+                success: true,
+                imageUrl: downloadURL
+            };
         } catch (uploadError) {
             // Check if it's a CORS error
-            if (uploadError.message && (uploadError.message.includes('CORS') ||
-                                        uploadError.message.includes('access control check') ||
-                                        uploadError.message.includes('network error'))) {
-                console.warn('CORS error detected when uploading to Firebase Storage');
+            const isCorsError = uploadError.message && (
+                uploadError.message.includes('CORS') ||
+                uploadError.message.includes('access control check') ||
+                uploadError.message.includes('network error') ||
+                uploadError.message.includes('Failed to fetch') ||
+                uploadError.code === 'storage/unauthorized'
+            );
 
-                // Return a placeholder image URL instead
-                return './assets/images/placeholder.png';
+            if (isCorsError) {
+                console.warn('CORS error detected when uploading to Firebase Storage:', uploadError);
+                return {
+                    success: false,
+                    imageUrl: './assets/images/placeholder.png',
+                    error: 'Image upload failed due to CORS restrictions',
+                    isCorsError: true
+                };
             } else {
-                // For other errors, rethrow
-                throw uploadError;
+                console.error('Non-CORS upload error:', uploadError);
+                return {
+                    success: false,
+                    imageUrl: './assets/images/placeholder.png',
+                    error: `Upload failed: ${uploadError.message || 'Unknown error'}`
+                };
             }
         }
     } catch (error) {
         console.error('Error in uploadListingImage:', error);
         // Return a placeholder image instead of failing completely
-        return './assets/images/placeholder.png';
+        return {
+            success: false,
+            imageUrl: './assets/images/placeholder.png',
+            error: `Error preparing upload: ${error.message || 'Unknown error'}`
+        };
     }
 }
 

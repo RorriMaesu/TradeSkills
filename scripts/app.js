@@ -1115,6 +1115,7 @@ async function showListingDetailSection() {
                             <div class="listing-detail">
                                 <div class="listing-image">
                                     <img src="${listing.imageUrl || './assets/images/placeholder.png'}" alt="${listing.title}">
+                                    ${listing.imageUploadNote ? `<div class="form-note warning">${listing.imageUploadNote}</div>` : ''}
                                 </div>
                                 <div class="listing-info">
                                     <h1>${listing.title}</h1>
@@ -1253,6 +1254,13 @@ function showCreateListingSection() {
                         <div class="form-group">
                             <label for="listing-image">Image (Optional)</label>
                             <input type="file" id="listing-image" accept="image/*">
+                            ${window.location.hostname.includes('github.io') ?
+                                `<div class="form-note warning">
+                                    <strong>Note:</strong> Image uploads may not work on GitHub Pages due to CORS restrictions.
+                                    Your listing will use a placeholder image instead.
+                                </div>` :
+                                ''
+                            }
                         </div>
                         <div class="form-actions">
                             <button type="button" id="cancel-listing-button" class="btn-secondary">Cancel</button>

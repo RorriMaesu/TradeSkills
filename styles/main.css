@@ -346,6 +346,19 @@ p {
     border-color: var(--primary-color);
 }
 
+.form-note {
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+}
+
+.form-note.warning {
+    background-color: rgba(243, 156, 18, 0.1);
+    border-left: 3px solid var(--warning-color);
+    color: var(--warning-color);
+}
+
 .form-links {
     margin-top: var(--spacing-md);
     display: flex;
