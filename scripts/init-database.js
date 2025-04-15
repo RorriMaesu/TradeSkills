@@ -28,6 +28,48 @@ export async function initializeDatabase() {
             note: 'This is a placeholder document to initialize the trades collection'
         });
 
+        // Create messages collection with a placeholder document
+        const messagesRef = collection(db, 'messages');
+        await setDoc(doc(messagesRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the messages collection'
+        });
+
+        // Create conversations collection with a placeholder document
+        const conversationsRef = collection(db, 'conversations');
+        await setDoc(doc(conversationsRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the conversations collection'
+        });
+
+        // Create forum categories collection with a placeholder document
+        const forumCategoriesRef = collection(db, 'forumCategories');
+        await setDoc(doc(forumCategoriesRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the forum categories collection'
+        });
+
+        // Create forum posts collection with a placeholder document
+        const forumPostsRef = collection(db, 'forumPosts');
+        await setDoc(doc(forumPostsRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the forum posts collection'
+        });
+
+        // Create forum comments collection with a placeholder document
+        const forumCommentsRef = collection(db, 'forumComments');
+        await setDoc(doc(forumCommentsRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the forum comments collection'
+        });
+
+        // Create forum votes collection with a placeholder document
+        const forumVotesRef = collection(db, 'forumVotes');
+        await setDoc(doc(forumVotesRef, 'placeholder'), {
+            createdAt: new Date(),
+            note: 'This is a placeholder document to initialize the forum votes collection'
+        });
+
         console.log('Database initialized successfully!');
         return { success: true };
     } catch (error) {

@@ -14,13 +14,15 @@
     <header class="nav-bar" id="main-header">
         <div class="container">
             <div class="logo">
-                <a href="index.html">TradeSkills</a>
+                <a href="/" data-link>TradeSkills</a>
             </div>
             <nav class="nav-links" id="nav-links">
-                <a href="index.html">Home</a>
-                <a href="marketplace.html" class="active">Marketplace</a>
-                <a href="how-it-works.html">How It Works</a>
-                <a href="about.html">About</a>
+                <a href="/" data-link>Home</a>
+                <a href="/marketplace" data-link class="active">Marketplace</a>
+                <a href="/messages" data-link>Messages</a>
+                <a href="/forums" data-link>Forums</a>
+                <a href="/how-it-works" data-link>How It Works</a>
+                <a href="/about" data-link>About</a>
             </nav>
             <div class="auth-buttons" id="auth-buttons">
                 <button id="login-button" class="btn-login">Login</button>
@@ -63,15 +65,15 @@
                 </div>
 
                 <div class="category-icons">
-                    <div class="category-icon">
+                    <div class="category-icon" data-category="goods">
                         <img src="assets/images/boxIcon.png" alt="Goods" class="category-img">
                         <span>Goods</span>
                     </div>
-                    <div class="category-icon">
+                    <div class="category-icon" data-category="services">
                         <img src="assets/images/wrenchIcon.png" alt="Services" class="category-img">
                         <span>Services</span>
                     </div>
-                    <div class="category-icon">
+                    <div class="category-icon" data-category="skills">
                         <img src="assets/images/educationIcon.png" alt="Skills" class="category-img">
                         <span>Skills</span>
                     </div>
@@ -91,7 +93,7 @@
                                 <img src="assets/images/default-avatar.png" alt="User">
                                 <span>John D.</span>
                             </div>
-                            <button class="btn-primary">View Details</button>
+                            <button class="btn-primary view-listing-btn" data-id="sample1">View Details</button>
                         </div>
                     </div>
 
@@ -107,7 +109,7 @@
                                 <img src="assets/images/default-avatar.png" alt="User">
                                 <span>Sarah M.</span>
                             </div>
-                            <button class="btn-primary">View Details</button>
+                            <button class="btn-primary view-listing-btn" data-id="sample2">View Details</button>
                         </div>
                     </div>
 
@@ -123,7 +125,7 @@
                                 <img src="assets/images/default-avatar.png" alt="User">
                                 <span>Emily R.</span>
                             </div>
-                            <button class="btn-primary">View Details</button>
+                            <button class="btn-primary view-listing-btn" data-id="sample3">View Details</button>
                         </div>
                     </div>
 
@@ -139,7 +141,7 @@
                                 <img src="assets/images/default-avatar.png" alt="User">
                                 <span>Michael T.</span>
                             </div>
-                            <button class="btn-primary">View Details</button>
+                            <button class="btn-primary view-listing-btn" data-id="sample4">View Details</button>
                         </div>
                     </div>
                 </div>
@@ -165,10 +167,12 @@
                 <div class="footer-section">
                     <h3>Quick Links</h3>
                     <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="marketplace.html">Marketplace</a></li>
-                        <li><a href="how-it-works.html">How It Works</a></li>
-                        <li><a href="about.html">About</a></li>
+                        <li><a href="/" data-link>Home</a></li>
+                        <li><a href="/marketplace" data-link>Marketplace</a></li>
+                        <li><a href="/messages" data-link>Messages</a></li>
+                        <li><a href="/forums" data-link>Forums</a></li>
+                        <li><a href="/how-it-works" data-link>How It Works</a></li>
+                        <li><a href="/about" data-link>About</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -270,6 +274,59 @@
                 </div>
                 <div id="reset-message" class="message"></div>
             </form>
+        </div>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
+        <ul>
+            <li id="profile-name">Name</li>
+            <li><a href="/dashboard" data-link>My Dashboard</a></li>
+            <li><a href="/profile" data-link>Profile Settings</a></li>
+            <li><a href="/my-listings" data-link>My Listings</a></li>
+            <li><a href="/my-trades" data-link>My Trades</a></li>
+            <li><a href="/messages" data-link>My Messages</a></li>
+            <li><a href="#" id="logout-button">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Trade Proposal Modal -->
+    <div id="trade-proposal-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Propose a Trade</h2>
+
+            <div class="trade-proposal-form">
+                <div class="trade-items">
+                    <div class="trade-item">
+                        <h3>You Want</h3>
+                        <div id="requested-listing" class="trade-listing-preview">
+                            <!-- Requested listing details will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="trade-item">
+                        <h3>You Offer</h3>
+                        <div id="my-listings-container">
+                            <p class="loading">Loading your listings...</p>
+                            <div id="my-listings-selection" class="listings-grid">
+                                <!-- User's listings will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="trade-message">Message to Listing Owner (Optional)</label>
+                    <textarea id="trade-message" rows="3" placeholder="Introduce yourself and explain why you're interested in this trade..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancel-trade-button" class="btn-secondary">Cancel</button>
+                    <button type="button" id="propose-trade-button" class="btn-primary" disabled>Propose Trade</button>
+                </div>
+
+                <div id="trade-proposal-error" class="error-message"></div>
+            </div>
         </div>
     </div>
 

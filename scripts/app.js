@@ -5,6 +5,7 @@ import * as listingsModule from './listings.js';
 import * as tradesModule from './trades.js';
 import * as messagesModule from './messages.js';
 import * as forumsModule from './forums.js';
+import * as partnersModule from './partners.js';
 
 // App state to store current user and application state
 const appState = {
@@ -224,6 +225,7 @@ function showAuthenticatedUI() {
             <a href="/marketplace" data-link>Marketplace</a>
             <a href="messages.html">Messages</a>
             <a href="forums.html">Forums</a>
+            <a href="partners.html">Partners</a>
             <a href="/profile" data-link>Profile</a>
         `;
 

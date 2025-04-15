@@ -1,0 +1,536 @@
+/* Partners Page Styles */
+/* Main container styles */
+.partners-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+  border-bottom: 2px solid #e5e5e5;
+  padding-bottom: 10px;
+}
+
+/* Tab navigation */
+.partners-tabs {
+  display: flex;
+  background-color: #f9f9f9;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid #e5e5e5;
+  border-bottom: none;
+}
+
+.tab-button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  text-align: center;
+  font-weight: 500;
+  color: #555;
+}
+
+.tab-button:hover {
+  background-color: #f0f0f0;
+}
+
+.tab-button.active {
+  background-color: #5a67d8;
+  color: white;
+}
+
+/* Tab content */
+.tab-content {
+  display: none;
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 0 0 8px 8px;
+  background-color: #fff;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Partner cards */
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.partner-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.partner-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.partner-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.partner-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 15px;
+  border: 2px solid #5a67d8;
+}
+
+.partner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partner-info {
+  flex: 1;
+}
+
+.partner-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.partner-status {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.partner-body {
+  padding: 15px;
+}
+
+.partner-skills {
+  margin-bottom: 15px;
+}
+
+.partner-skills h4 {
+  font-size: 1rem;
+  margin: 0 0 10px 0;
+  color: #555;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-tag {
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+}
+
+.partner-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.partner-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-top: 1px solid #e5e5e5;
+  background-color: #fafafa;
+}
+
+.partner-since {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.partner-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-view-profile,
+.btn-message,
+.btn-remove,
+.btn-accept,
+.btn-decline {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-view-profile {
+  background-color: #5a67d8;
+  color: white;
+}
+
+.btn-view-profile:hover {
+  background-color: #4c56c5;
+}
+
+.btn-message {
+  background-color: #38b2ac;
+  color: white;
+}
+
+.btn-message:hover {
+  background-color: #319795;
+}
+
+.btn-remove {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.btn-remove:hover {
+  background-color: #c53030;
+}
+
+.btn-accept {
+  background-color: #48bb78;
+  color: white;
+}
+
+.btn-accept:hover {
+  background-color: #38a169;
+}
+
+.btn-decline {
+  background-color: #f56565;
+  color: white;
+}
+
+.btn-decline:hover {
+  background-color: #e53e3e;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.btn-find-partners {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #5a67d8;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.btn-find-partners:hover {
+  background-color: #4c56c5;
+}
+
+/* Partner search section */
+.search-section {
+  margin-bottom: 30px;
+}
+
+.search-form {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.search-button {
+  padding: 12px 20px;
+  background-color: #5a67d8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.search-button:hover {
+  background-color: #4c56c5;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Partner Profile Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background-color: white;
+  width: 90%;
+  max-width: 800px;
+  margin: 50px auto;
+  border-radius: 8px;
+  overflow: hidden;
+  animation: modalFade 0.3s ease-in;
+}
+
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 20px;
+  background-color: #5a67d8;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+}
+
+.profile-sidebar {
+  text-align: center;
+}
+
+.profile-main-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  border: 3px solid #5a67d8;
+  overflow: hidden;
+}
+
+.profile-main-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #5a67d8;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.profile-section {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.profile-section:last-child {
+  border-bottom: none;
+}
+
+.profile-section-title {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.listing-preview {
+  display: flex;
+  margin-bottom: 15px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.listing-preview:hover {
+  background-color: #f9f9f9;
+}
+
+.listing-preview img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 15px;
+}
+
+.listing-preview-content {
+  flex: 1;
+}
+
+.listing-preview-title {
+  font-size: 1.1rem;
+  margin: 0 0 10px 0;
+}
+
+.listing-preview-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.profile-bio {
+  line-height: 1.6;
+  color: #555;
+}
+
+.profile-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.interest-tag {
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .partners-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-form {
+    flex-direction: column;
+  }
+  
+  .profile-sidebar {
+    margin-bottom: 30px;
+  }
+}

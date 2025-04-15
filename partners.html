@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How It Works - TradeSkills</title>
-    <meta name="description" content="Learn how to use TradeSkills to exchange goods and services without cash.">
+    <title>Partners - TradeSkills</title>
+    <meta name="description" content="Manage your TradeSkills partners and connections.">
     <base href="https://rorrimaesu.github.io/TradeSkills/">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="stylesheet" href="styles/partners.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
@@ -19,7 +20,9 @@
             <nav class="nav-links" id="nav-links">
                 <a href="/" data-link>Home</a>
                 <a href="/marketplace" data-link>Marketplace</a>
-                <a href="/how-it-works" data-link class="active">How It Works</a>
+                <a href="messages.html">Messages</a>
+                <a href="forums.html">Forums</a>
+                <a href="/how-it-works" data-link>How It Works</a>
                 <a href="/about" data-link>About</a>
             </nav>
             <div class="auth-buttons" id="auth-buttons">
@@ -35,58 +38,87 @@
     </header>
 
     <main id="main-content" class="main-content">
-        <section class="section">
+        <section id="partners-section" class="section section-partners">
             <div class="container">
-                <h1>How TradeSkills Works</h1>
-                <p class="section-intro">TradeSkills is a platform that allows you to exchange goods and services without using cash. Here's how to get started:</p>
+                <h1>Your Partners</h1>
+                <p class="section-description">Connect with other users to build your trading network. Partners can see your listings first and get priority access to your trades.</p>
 
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>Create Your Profile</h3>
-                        <p>Sign up for a free account and complete your profile. Add information about your interests, skills, and what you're looking to trade.</p>
+                <div class="partners-tabs">
+                    <button class="tab-button active" data-tab="my-partners">My Partners</button>
+                    <button class="tab-button" data-tab="partner-requests">Partner Requests <span id="partner-requests" class="badge">0</span></button>
+                    <button class="tab-button" data-tab="sent-requests">Sent Requests</button>
+                    <button class="tab-button" data-tab="find-partners">Find Partners</button>
+                </div>
+
+                <!-- My Partners Tab -->
+                <div class="tab-content active" id="my-partners-tab">
+                    <div id="partners-loading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading your partners...</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>List Your Items or Services</h3>
-                        <p>Create listings for items you want to trade or services you can offer. Add photos, descriptions, and specify what you're looking for in return.</p>
+                    <div id="partners-empty-state" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>No Partners Yet</h3>
+                        <p>You don't have any partners yet. Find partners to build your trading network!</p>
+                        <button class="btn-primary find-partners-btn">Find Partners</button>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>Browse the Marketplace</h3>
-                        <p>Explore listings from other users to find items or services you need. Use filters to narrow down your search by category or location.</p>
+                    <div id="partners-list" class="partners-grid">
+                        <!-- Partner cards will be dynamically added here -->
                     </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <h3>Make Trade Offers</h3>
-                        <p>When you find something you want, make a trade offer. Propose what you're willing to exchange and negotiate with the other user.</p>
+                    <button id="partners-load-more" class="load-more-btn" style="display: none;">Load More</button>
+                </div>
+
+                <!-- Partner Requests Tab -->
+                <div class="tab-content" id="partner-requests-tab">
+                    <div id="requests-loading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading partner requests...</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">5</div>
-                        <h3>Complete the Trade</h3>
-                        <p>Once both parties agree, arrange the exchange details. Meet in person or arrange shipping depending on the items being traded.</p>
+                    <div id="requests-empty-state" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">📩</div>
+                        <h3>No Requests</h3>
+                        <p>You don't have any pending partner requests.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">6</div>
-                        <h3>Leave Feedback</h3>
-                        <p>After completing a trade, leave feedback for the other user. This helps build trust in the community and improves your reputation.</p>
+                    <div id="requests-list" class="requests-list">
+                        <!-- Request items will be dynamically added here -->
                     </div>
                 </div>
 
-                <div class="section-divider"></div>
+                <!-- Sent Requests Tab -->
+                <div class="tab-content" id="sent-requests-tab">
+                    <div id="sent-requests-loading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading sent requests...</p>
+                    </div>
+                    <div id="sent-requests-empty-state" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">✉️</div>
+                        <h3>No Sent Requests</h3>
+                        <p>You haven't sent any partner requests yet.</p>
+                        <button class="btn-primary find-partners-btn">Find Partners</button>
+                    </div>
+                    <div id="sent-requests-list" class="requests-list">
+                        <!-- Sent request items will be dynamically added here -->
+                    </div>
+                </div>
 
-                <h2>Trading Guidelines</h2>
-                <ul class="guidelines-list">
-                    <li><strong>Be Honest:</strong> Provide accurate descriptions and photos of your items.</li>
-                    <li><strong>Communicate Clearly:</strong> Respond promptly and be clear about your expectations.</li>
-                    <li><strong>Be Fair:</strong> Offer reasonable trades that provide value to both parties.</li>
-                    <li><strong>Stay Safe:</strong> Meet in public places for in-person exchanges or use secure shipping methods.</li>
-                    <li><strong>Respect Others:</strong> Be courteous and professional in all interactions.</li>
-                </ul>
-
-                <div class="cta-container">
-                    <h3>Ready to Start Trading?</h3>
-                    <button id="join-now-button" class="cta-button">Join TradeSkills Now</button>
+                <!-- Find Partners Tab -->
+                <div class="tab-content" id="find-partners-tab">
+                    <div class="search-container">
+                        <input type="text" id="user-search-input" placeholder="Search for users by name or email...">
+                        <p class="search-hint">Type at least 2 characters to search</p>
+                    </div>
+                    <div id="search-loading" class="loading-state" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Searching users...</p>
+                    </div>
+                    <div id="search-empty-state" class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>Search for Users</h3>
+                        <p>Search for users by name or email to add them as partners.</p>
+                    </div>
+                    <div id="search-results" class="search-results" style="display: none;">
+                        <!-- Search result items will be dynamically added here -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -104,6 +136,8 @@
                     <ul>
                         <li><a href="/" data-link>Home</a></li>
                         <li><a href="/marketplace" data-link>Marketplace</a></li>
+                        <li><a href="messages.html">Messages</a></li>
+                        <li><a href="forums.html">Forums</a></li>
                         <li><a href="/how-it-works" data-link>How It Works</a></li>
                         <li><a href="/about" data-link>About</a></li>
                     </ul>
@@ -210,7 +244,40 @@
         </div>
     </div>
 
+    <!-- User Profile Dropdown -->
+    <div id="user-profile-dropdown" class="dropdown" style="display: none;">
+        <ul>
+            <li id="profile-name">Name</li>
+            <li><a href="/dashboard" data-link>My Dashboard</a></li>
+            <li><a href="/profile" data-link>Profile Settings</a></li>
+            <li><a href="/my-listings" data-link>My Listings</a></li>
+            <li><a href="/my-trades" data-link>My Trades</a></li>
+            <li><a href="partners.html">My Partners</a></li>
+            <li><a href="messages.html">My Messages</a></li>
+            <li><a href="forums.html">Forums</a></li>
+            <li><a href="#" id="logout-button">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Partner Profile Modal -->
+    <div id="partner-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="partner-modal-content">
+                <!-- Partner profile content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="scripts/main.js" type="module" crossorigin="anonymous"></script>
+    <script type="module">
+        import { initPartnersUI } from './scripts/partners-ui.js';
+        
+        // Initialize the partners UI when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initPartnersUI();
+        });
+    </script>
 </body>
 </html>
