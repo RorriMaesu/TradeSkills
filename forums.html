@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <link rel="stylesheet" href="styles/messaging.css">
+    <link rel="stylesheet" href="styles/forums-newsfeed.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="scripts/main.js" type="module" crossorigin="anonymous" defer></script>
     <script src="scripts/forums-ui.js" type="module" crossorigin="anonymous" defer></script>
@@ -42,34 +43,76 @@
     <main class="main-content" id="main-content">
         <section id="forums-section" class="section section-forums">
             <div class="container">
-                <div class="forums-container">
-                    <div class="forums-header">
-                        <h1>TradeSkills Community Forums</h1>
-                        <p class="forums-description">Join discussions, ask questions, and connect with other members of the TradeSkills community.</p>
-                    </div>
-
-                    <div class="forums-actions">
-                        <div class="forums-search">
-                            <input type="text" placeholder="Search forums..." id="forums-search-input">
+                <div class="forums-layout">
+                    <!-- Left Sidebar -->
+                    <div class="forums-sidebar">
+                        <div class="sidebar-section">
+                            <h3>Categories</h3>
+                            <ul class="category-menu" id="category-menu">
+                                <li class="active"><a href="#" data-category="all">All Posts</a></li>
+                                <!-- Categories will be loaded here -->
+                            </ul>
                         </div>
-                        <div class="forums-buttons">
-                            <button class="btn-primary" id="create-category-button">Create Category</button>
-                        </div>
-                    </div>
-
-                    <div class="category-list" id="category-list">
-                        <!-- Categories will be loaded here -->
-                        <div class="empty-state">
-                            <p>No categories found.</p>
-                            <p>Be the first to create a category!</p>
+                        <div class="sidebar-section">
+                            <h3>Trending Tags</h3>
+                            <div class="tag-cloud" id="tag-cloud">
+                                <!-- Tags will be loaded here -->
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="forums-recent-activity">
-                    <h2>Recent Activity</h2>
-                    <div class="recent-activity-list" id="recent-activity-list">
-                        <!-- Recent activity will be loaded here -->
+                    <!-- Main Content -->
+                    <div class="forums-main">
+                        <div class="forums-header">
+                            <h1>TradeSkills Community</h1>
+                            <p class="forums-description">Share your skills, services, and goods with the community.</p>
+                        </div>
+
+                        <!-- Post Creation Area -->
+                        <div class="post-creation-area" id="post-creation-area">
+                            <div class="post-input-wrapper">
+                                <img src="assets/images/default-avatar.png" alt="Your Profile" class="post-avatar" id="user-avatar">
+                                <div class="post-input" id="post-input-trigger">
+                                    <span>What are you offering or seeking today?</span>
+                                </div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-button" id="post-image-button">
+                                    <i class="fas fa-image"></i> Photo
+                                </button>
+                                <button class="post-action-button" id="post-tag-button">
+                                    <i class="fas fa-tag"></i> Category
+                                </button>
+                                <button class="post-action-button" id="post-location-button">
+                                    <i class="fas fa-map-marker-alt"></i> Location
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Post Feed -->
+                        <div class="post-feed" id="post-feed">
+                            <!-- Posts will be loaded here -->
+                            <div class="empty-state" id="empty-feed-state">
+                                <i class="fas fa-stream"></i>
+                                <p>No posts yet. Be the first to share something!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar -->
+                    <div class="forums-sidebar right-sidebar">
+                        <div class="sidebar-section">
+                            <h3>Recent Activity</h3>
+                            <div class="recent-activity-list" id="recent-activity-list">
+                                <!-- Recent activity will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="sidebar-section">
+                            <h3>Top Contributors</h3>
+                            <ul class="contributors-list" id="contributors-list">
+                                <!-- Contributors will be loaded here -->
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,18 +282,45 @@
             <span class="close-button">&times;</span>
             <h2>Create New Post</h2>
             <form id="create-post-form">
-                <input type="hidden" id="category-id">
-                <div class="form-group">
-                    <label for="post-title">Title</label>
-                    <input type="text" id="post-title" required>
+                <div class="post-creator-info">
+                    <img src="assets/images/default-avatar.png" alt="Your Profile" class="post-avatar" id="modal-user-avatar">
+                    <div class="post-creator-name" id="post-creator-name">Your Name</div>
                 </div>
                 <div class="form-group">
-                    <label for="post-content">Content</label>
-                    <textarea id="post-content" rows="8" required></textarea>
+                    <select id="post-type" class="post-type-select">
+                        <option value="offering">I'm Offering</option>
+                        <option value="seeking">I'm Seeking</option>
+                        <option value="discussion">General Discussion</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="post-title" placeholder="Title of your post" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="post-content" rows="5" placeholder="Describe what you're offering or seeking..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <select id="post-category" required>
+                        <option value="">Select a Category</option>
+                        <!-- Categories will be loaded here -->
+                    </select>
+                </div>
+                <div class="form-group image-upload-area">
+                    <label for="post-image" class="image-upload-label">
+                        <i class="fas fa-image"></i> Add Photos
+                    </label>
+                    <input type="file" id="post-image" accept="image/*" multiple style="display: none;">
+                    <div class="image-preview" id="image-preview"></div>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="post-location" placeholder="Location (optional)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="post-tags" placeholder="Tags (separate with commas)">
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" id="cancel-post-button">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Post</button>
+                    <button type="submit" class="btn-primary">Post</button>
                 </div>
             </form>
         </div>

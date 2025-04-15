@@ -1,5 +1,5 @@
 // Import Firebase services
-import { db, auth } from './firebase-config.js';
+import { db, auth, storage } from './firebase-config.js';
 import {
     collection,
     addDoc,
@@ -13,8 +13,14 @@ import {
     limit,
     increment,
     serverTimestamp,
-    deleteDoc
+    deleteDoc,
+    collectionGroup
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // Create a new forum category (admin only)
 export async function createCategory(name, description) {
@@ -111,7 +117,7 @@ export async function getCategory(categoryId) {
 }
 
 // Create a new forum post
-export async function createPost(categoryId, title, content) {
+export async function createPost(postData) {
     try {
         const user = auth.currentUser;
         if (!user) {
@@ -121,8 +127,30 @@ export async function createPost(categoryId, title, content) {
             };
         }
 
+        // Handle both old and new function signature
+        let processedData = {};
+
+        if (typeof postData === 'string') {
+            // Old signature: createPost(categoryId, title, content)
+            const categoryId = arguments[0];
+            const title = arguments[1];
+            const content = arguments[2];
+
+            processedData = {
+                categoryId,
+                title,
+                content,
+                type: 'offering', // Default type
+                tags: [],
+                images: []
+            };
+        } else {
+            // New signature: createPost({ categoryId, title, content, type, location, tags, images })
+            processedData = postData;
+        }
+
         // Check if category exists
-        const categoryDoc = await getDoc(doc(db, 'forumCategories', categoryId));
+        const categoryDoc = await getDoc(doc(db, 'forumCategories', processedData.categoryId));
         if (!categoryDoc.exists()) {
             return {
                 success: false,
@@ -130,28 +158,61 @@ export async function createPost(categoryId, title, content) {
             };
         }
 
-        const postData = {
-            categoryId: categoryId,
-            title: title,
-            content: content,
+        // Get category name for easier filtering/display
+        const categoryName = categoryDoc.data().name;
+
+        const newPostData = {
+            categoryId: processedData.categoryId,
+            categoryName: categoryName,
+            title: processedData.title,
+            content: processedData.content,
+            type: processedData.type || 'offering',
+            location: processedData.location || '',
+            tags: processedData.tags || [],
+            images: processedData.images || [],
             authorId: user.uid,
             authorName: user.displayName || 'TradeSkills User',
             authorPhotoURL: user.photoURL || null,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             commentCount: 0,
-            upvotes: 0,
-            downvotes: 0,
+            likes: 0,
             views: 0
         };
 
-        const docRef = await addDoc(collection(db, 'forumPosts'), postData);
+        const docRef = await addDoc(collection(db, 'forumPosts'), newPostData);
 
         // Update post count in category
-        await updateDoc(doc(db, 'forumCategories', categoryId), {
+        await updateDoc(doc(db, 'forumCategories', processedData.categoryId), {
             postCount: increment(1),
             updatedAt: serverTimestamp()
         });
+
+        // Add tags to the tags collection for tracking popular tags
+        if (processedData.tags && processedData.tags.length > 0) {
+            for (const tag of processedData.tags) {
+                // Check if tag exists
+                const tagsRef = collection(db, 'forumTags');
+                const q = query(tagsRef, where('name', '==', tag));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    // Create new tag
+                    await addDoc(tagsRef, {
+                        name: tag,
+                        count: 1,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                } else {
+                    // Update existing tag count
+                    await updateDoc(querySnapshot.docs[0].ref, {
+                        count: increment(1),
+                        updatedAt: serverTimestamp()
+                    });
+                }
+            }
+        }
 
         return {
             success: true,
@@ -600,6 +661,238 @@ export async function getRecentActivity(limitCount = 10) {
         return {
             success: false,
             error: `Failed to get recent activity: ${error.message}`
+        };
+    }
+}
+
+// Get all posts for the newsfeed
+export async function getAllPosts(limitCount = 20) {
+    try {
+        const postsRef = collection(db, 'forumPosts');
+        const q = query(
+            postsRef,
+            orderBy('createdAt', 'desc'),
+            limit(limitCount)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const posts = [];
+        querySnapshot.forEach((doc) => {
+            posts.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        return {
+            success: true,
+            posts: posts
+        };
+    } catch (error) {
+        console.error('Error getting all posts:', error);
+        return {
+            success: false,
+            error: `Failed to get posts: ${error.message}`
+        };
+    }
+}
+
+// Get popular tags
+export async function getPopularTags(limitCount = 10) {
+    try {
+        const tagsRef = collection(db, 'forumTags');
+        const q = query(
+            tagsRef,
+            orderBy('count', 'desc'),
+            limit(limitCount)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        const tags = [];
+        querySnapshot.forEach((doc) => {
+            tags.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        return {
+            success: true,
+            tags: tags
+        };
+    } catch (error) {
+        console.error('Error getting popular tags:', error);
+        return {
+            success: false,
+            error: `Failed to get tags: ${error.message}`
+        };
+    }
+}
+
+// Get top contributors
+export async function getTopContributors(limitCount = 5) {
+    try {
+        // This is a simplified implementation
+        // In a real app, you would track user contributions more accurately
+        const postsRef = collection(db, 'forumPosts');
+        const q = query(postsRef, orderBy('createdAt', 'desc'), limit(100));
+        const querySnapshot = await getDocs(q);
+
+        // Count posts by author
+        const authorCounts = {};
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const authorId = data.authorId;
+
+            if (!authorCounts[authorId]) {
+                authorCounts[authorId] = {
+                    id: authorId,
+                    name: data.authorName,
+                    photoURL: data.authorPhotoURL,
+                    postCount: 0,
+                    commentCount: 0
+                };
+            }
+
+            authorCounts[authorId].postCount++;
+        });
+
+        // Get comment counts
+        const commentsRef = collection(db, 'forumComments');
+        const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(100));
+        const commentsSnapshot = await getDocs(commentsQuery);
+
+        commentsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            const authorId = data.authorId;
+
+            if (!authorCounts[authorId]) {
+                authorCounts[authorId] = {
+                    id: authorId,
+                    name: data.authorName,
+                    photoURL: data.authorPhotoURL,
+                    postCount: 0,
+                    commentCount: 0
+                };
+            }
+
+            authorCounts[authorId].commentCount++;
+        });
+
+        // Convert to array and sort by total contributions
+        const contributors = Object.values(authorCounts)
+            .sort((a, b) => (b.postCount + b.commentCount) - (a.postCount + a.commentCount))
+            .slice(0, limitCount);
+
+        return {
+            success: true,
+            contributors: contributors
+        };
+    } catch (error) {
+        console.error('Error getting top contributors:', error);
+        return {
+            success: false,
+            error: `Failed to get contributors: ${error.message}`
+        };
+    }
+}
+
+// Upload an image to Firebase Storage
+export async function uploadImage(file) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('You must be logged in to upload images.');
+        }
+
+        // Create a unique filename
+        const timestamp = new Date().getTime();
+        const fileName = `${user.uid}_${timestamp}_${file.name}`;
+        const storageRef = ref(storage, `forum_images/${fileName}`);
+
+        // Upload the file
+        const snapshot = await uploadBytes(storageRef, file);
+
+        // Get the download URL
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        return downloadURL;
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+    }
+}
+
+// Like a post
+export async function likePost(postId) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            return {
+                success: false,
+                error: 'You must be logged in to like a post.'
+            };
+        }
+
+        // Check if post exists
+        const postRef = doc(db, 'forumPosts', postId);
+        const postDoc = await getDoc(postRef);
+
+        if (!postDoc.exists()) {
+            return {
+                success: false,
+                error: 'Post not found.'
+            };
+        }
+
+        // Check if user has already liked the post
+        const likesRef = collection(db, 'forumLikes');
+        const q = query(
+            likesRef,
+            where('postId', '==', postId),
+            where('userId', '==', user.uid)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            // User has already liked the post, remove the like
+            await deleteDoc(querySnapshot.docs[0].ref);
+
+            // Decrement like count
+            await updateDoc(postRef, {
+                likes: increment(-1)
+            });
+
+            return {
+                success: true,
+                message: 'Like removed.'
+            };
+        } else {
+            // User hasn't liked the post yet, add a like
+            await addDoc(likesRef, {
+                postId: postId,
+                userId: user.uid,
+                createdAt: serverTimestamp()
+            });
+
+            // Increment like count
+            await updateDoc(postRef, {
+                likes: increment(1)
+            });
+
+            return {
+                success: true,
+                message: 'Post liked.'
+            };
+        }
+    } catch (error) {
+        console.error('Error liking post:', error);
+        return {
+            success: false,
+            error: `Failed to like post: ${error.message}`
         };
     }
 }

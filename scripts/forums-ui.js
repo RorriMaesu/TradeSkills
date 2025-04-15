@@ -87,38 +87,47 @@ function cacheElements() {
     // Common elements across all pages
     elements.mainContent = document.getElementById('main-content');
 
-    // Forums main page elements
-    elements.categoryList = document.getElementById('category-list');
+    // Forums main page elements - Newsfeed
+    elements.categoryMenu = document.getElementById('category-menu');
+    elements.tagCloud = document.getElementById('tag-cloud');
+    elements.postFeed = document.getElementById('post-feed');
+    elements.emptyFeedState = document.getElementById('empty-feed-state');
     elements.recentActivityList = document.getElementById('recent-activity-list');
-    elements.createCategoryButton = document.getElementById('create-category-button');
+    elements.contributorsList = document.getElementById('contributors-list');
+    elements.postInputTrigger = document.getElementById('post-input-trigger');
+    elements.postImageButton = document.getElementById('post-image-button');
+    elements.postTagButton = document.getElementById('post-tag-button');
+    elements.postLocationButton = document.getElementById('post-location-button');
+    elements.userAvatar = document.getElementById('user-avatar');
+
+    // Create Post Modal
+    elements.createPostModal = document.getElementById('create-post-modal');
+    elements.createPostForm = document.getElementById('create-post-form');
+    elements.modalUserAvatar = document.getElementById('modal-user-avatar');
+    elements.postCreatorName = document.getElementById('post-creator-name');
+    elements.postType = document.getElementById('post-type');
+    elements.postTitle = document.getElementById('post-title');
+    elements.postContent = document.getElementById('post-content');
+    elements.postCategory = document.getElementById('post-category');
+    elements.postImage = document.getElementById('post-image');
+    elements.imagePreview = document.getElementById('image-preview');
+    elements.postLocation = document.getElementById('post-location');
+    elements.postTags = document.getElementById('post-tags');
+    elements.cancelPostButton = document.getElementById('cancel-post-button');
+
+    // Create Category Modal (keeping for admin functionality)
     elements.createCategoryModal = document.getElementById('create-category-modal');
     elements.createCategoryForm = document.getElementById('create-category-form');
     elements.categoryName = document.getElementById('category-name');
     elements.categoryDescription = document.getElementById('category-description');
     elements.cancelCategoryButton = document.getElementById('cancel-category-button');
-    elements.forumsSearchInput = document.getElementById('forums-search-input');
 
-    // Forum category page elements
-    elements.categoryHeader = document.getElementById('category-header');
-    elements.postsList = document.getElementById('posts-list');
-    elements.createPostButton = document.getElementById('create-post-button');
-    elements.createPostModal = document.getElementById('create-post-modal');
-    elements.createPostForm = document.getElementById('create-post-form');
-    elements.postTitle = document.getElementById('post-title');
-    elements.postContent = document.getElementById('post-content');
-    elements.categoryId = document.getElementById('category-id');
-    elements.cancelPostButton = document.getElementById('cancel-post-button');
-    elements.postsSearchInput = document.getElementById('posts-search-input');
-
-    // Forum post page elements
+    // Forum post page elements (keeping for post detail view)
     elements.postDetail = document.getElementById('post-detail');
     elements.commentForm = document.getElementById('comment-form');
     elements.commentInput = document.getElementById('comment-input');
     elements.submitCommentButton = document.getElementById('submit-comment-button');
     elements.commentsList = document.getElementById('comments-list');
-    elements.categoryLink = document.getElementById('category-link');
-    elements.postTitleBreadcrumb = document.getElementById('post-title-breadcrumb');
-    elements.commentsSortSelect = document.getElementById('comments-sort-select');
 
     // Modal close buttons
     const closeButtons = document.querySelectorAll('.close-button');
@@ -267,13 +276,22 @@ async function loadForumsPageContent() {
     try {
         state.isLoading = true;
 
-        // Load categories
+        // Load categories for sidebar
         const categoriesResult = await forumsModule.getCategories();
 
         if (categoriesResult.success) {
-            renderCategories(categoriesResult.categories);
+            renderCategorySidebar(categoriesResult.categories);
         } else {
-            showError(elements.categoryList, categoriesResult.error);
+            showError(elements.categoryMenu, categoriesResult.error);
+        }
+
+        // Load posts for newsfeed
+        const postsResult = await forumsModule.getAllPosts();
+
+        if (postsResult.success) {
+            renderPostFeed(postsResult.posts);
+        } else {
+            showError(elements.postFeed, postsResult.error);
         }
 
         // Load recent activity
@@ -284,6 +302,32 @@ async function loadForumsPageContent() {
         } else {
             showError(elements.recentActivityList, activityResult.error);
         }
+
+        // Load top contributors
+        const contributorsResult = await forumsModule.getTopContributors();
+
+        if (contributorsResult.success) {
+            renderTopContributors(contributorsResult.contributors);
+        } else {
+            showError(elements.contributorsList, contributorsResult.error);
+        }
+
+        // Load popular tags
+        const tagsResult = await forumsModule.getPopularTags();
+
+        if (tagsResult.success) {
+            renderTagCloud(tagsResult.tags);
+        } else {
+            showError(elements.tagCloud, tagsResult.error);
+        }
+
+        // Update user avatar if logged in
+        if (state.currentUser && elements.userAvatar) {
+            elements.userAvatar.src = state.currentUser.photoURL || 'assets/images/default-avatar.png';
+        }
+
+        // Setup post creation area
+        setupPostCreationArea();
     } catch (error) {
         console.error('Error loading forums page content:', error);
         showError(elements.mainContent, 'Failed to load forums content. Please try again later.');
@@ -394,40 +438,445 @@ async function loadPostPageContent() {
     }
 }
 
-// Render categories list
-function renderCategories(categories) {
-    if (!elements.categoryList) return;
+// Render categories in sidebar
+function renderCategorySidebar(categories) {
+    if (!elements.categoryMenu) return;
 
-    if (categories.length === 0) {
-        elements.categoryList.innerHTML = `
-            <div class="empty-state">
-                <p>No categories found.</p>
-                <p>Be the first to create a category!</p>
-            </div>
+    let html = '<li class="active"><a href="#" data-category="all"><i class="fas fa-stream"></i> All Posts</a></li>';
+
+    categories.forEach(category => {
+        // Get first letter of category name for icon
+        const iconLetter = category.name.charAt(0).toUpperCase();
+
+        html += `
+            <li>
+                <a href="#" data-category="${category.id}">
+                    <span class="category-icon">${iconLetter}</span>
+                    ${category.name}
+                </a>
+            </li>
         `;
+    });
+
+    elements.categoryMenu.innerHTML = html;
+
+    // Add event listeners to category links
+    const categoryLinks = elements.categoryMenu.querySelectorAll('a');
+    categoryLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Remove active class from all links
+            categoryLinks.forEach(l => l.parentElement.classList.remove('active'));
+
+            // Add active class to clicked link
+            link.parentElement.classList.add('active');
+
+            // Filter posts by category
+            const categoryId = link.getAttribute('data-category');
+            filterPostsByCategory(categoryId);
+        });
+    });
+}
+
+// Render post feed (Facebook-style)
+function renderPostFeed(posts) {
+    if (!elements.postFeed) return;
+
+    if (posts.length === 0) {
+        elements.emptyFeedState.style.display = 'flex';
         return;
     }
 
+    elements.emptyFeedState.style.display = 'none';
     let html = '';
 
-    categories.forEach(category => {
-        html += `
-            <div class="category-card">
-                <div class="category-info">
-                    <h3><a href="forum-category.html?id=${category.id}">${category.name}</a></h3>
-                    <p>${category.description}</p>
+    posts.forEach(post => {
+        const time = formatTimestamp(post.createdAt);
+        const postType = post.type || 'offering'; // Default to offering if not specified
+        const postTypeBadgeClass = `post-type-badge ${postType}`;
+        const postTypeBadgeText = postType.charAt(0).toUpperCase() + postType.slice(1);
+
+        // Get category name
+        const categoryName = post.categoryName || 'General';
+
+        // Format post images if any
+        let imagesHtml = '';
+        if (post.images && post.images.length > 0) {
+            imagesHtml = `
+                <div class="post-images">
+                    <img src="${post.images[0]}" alt="Post image" class="post-image">
                 </div>
-                <div class="category-stats">
-                    <div class="stat">
-                        <span class="stat-value">${category.postCount || 0}</span>
-                        <span class="stat-label">Posts</span>
+            `;
+        }
+
+        // Format post tags if any
+        let tagsHtml = '';
+        if (post.tags && post.tags.length > 0) {
+            tagsHtml = '<div class="post-tags">';
+            post.tags.forEach(tag => {
+                tagsHtml += `<span class="post-tag">${tag}</span>`;
+            });
+            tagsHtml += '</div>';
+        }
+
+        // Format location if any
+        let locationHtml = '';
+        if (post.location) {
+            locationHtml = `<span class="post-location"><i class="fas fa-map-marker-alt"></i> ${post.location}</span>`;
+        }
+
+        html += `
+            <div class="post-card" data-id="${post.id}" data-category="${post.categoryId || 'none'}">
+                <div class="post-header">
+                    <img src="${post.authorPhotoURL || 'assets/images/default-avatar.png'}" alt="${post.authorName}" class="post-avatar">
+                    <div class="post-user-info">
+                        <div class="post-user-name">${post.authorName}</div>
+                        <div class="post-meta">
+                            <span class="post-type-badge ${postTypeBadgeClass}">${postTypeBadgeText}</span>
+                            <span class="post-time">${time}</span>
+                            ${locationHtml}
+                        </div>
                     </div>
+                </div>
+                <div class="post-content">
+                    <h3 class="post-title">${post.title}</h3>
+                    <p class="post-text">${post.content}</p>
+                    ${imagesHtml}
+                    ${tagsHtml}
+                </div>
+                <div class="post-stats">
+                    <div class="post-likes">
+                        <i class="fas fa-thumbs-up"></i> ${post.likes || 0}
+                    </div>
+                    <div class="post-comments-count">
+                        ${post.commentCount || 0} comments
+                    </div>
+                </div>
+                <div class="post-actions-buttons">
+                    <button class="post-action" data-action="like" data-id="${post.id}">
+                        <i class="far fa-thumbs-up"></i> Like
+                    </button>
+                    <button class="post-action" data-action="comment" data-id="${post.id}">
+                        <i class="far fa-comment"></i> Comment
+                    </button>
+                    <button class="post-action" data-action="share" data-id="${post.id}">
+                        <i class="far fa-share-square"></i> Share
+                    </button>
                 </div>
             </div>
         `;
     });
 
-    elements.categoryList.innerHTML = html;
+    elements.postFeed.innerHTML = html;
+
+    // Add event listeners to post actions
+    const postActions = elements.postFeed.querySelectorAll('.post-action');
+    postActions.forEach(action => {
+        action.addEventListener('click', handlePostAction);
+    });
+
+    // Add event listeners to post titles for navigation
+    const postTitles = elements.postFeed.querySelectorAll('.post-title');
+    postTitles.forEach(title => {
+        title.addEventListener('click', (e) => {
+            const postCard = e.target.closest('.post-card');
+            if (postCard) {
+                const postId = postCard.getAttribute('data-id');
+                window.location.href = `forum-post.html?id=${postId}`;
+            }
+        });
+    });
+}
+
+// Render tag cloud
+function renderTagCloud(tags) {
+    if (!elements.tagCloud) return;
+
+    if (tags.length === 0) {
+        elements.tagCloud.innerHTML = '<div class="empty-state">No tags found</div>';
+        return;
+    }
+
+    let html = '';
+    tags.forEach(tag => {
+        html += `<span class="tag" data-tag="${tag.name}">${tag.name} (${tag.count})</span>`;
+    });
+
+    elements.tagCloud.innerHTML = html;
+
+    // Add event listeners to tags
+    const tagElements = elements.tagCloud.querySelectorAll('.tag');
+    tagElements.forEach(tagElement => {
+        tagElement.addEventListener('click', (e) => {
+            // Toggle active class
+            tagElement.classList.toggle('active');
+
+            // Get all active tags
+            const activeTags = Array.from(elements.tagCloud.querySelectorAll('.tag.active'))
+                .map(tag => tag.getAttribute('data-tag'));
+
+            // Filter posts by tags
+            filterPostsByTags(activeTags);
+        });
+    });
+}
+
+// Render top contributors
+function renderTopContributors(contributors) {
+    if (!elements.contributorsList) return;
+
+    if (contributors.length === 0) {
+        elements.contributorsList.innerHTML = '<div class="empty-state">No contributors found</div>';
+        return;
+    }
+
+    let html = '';
+    contributors.forEach(contributor => {
+        html += `
+            <li class="contributor-item">
+                <img src="${contributor.photoURL || 'assets/images/default-avatar.png'}" alt="${contributor.name}" class="contributor-avatar">
+                <div class="contributor-info">
+                    <div class="contributor-name">${contributor.name}</div>
+                    <div class="contributor-stats">
+                        <span>${contributor.postCount || 0} posts</span> •
+                        <span>${contributor.commentCount || 0} comments</span>
+                    </div>
+                </div>
+            </li>
+        `;
+    });
+
+    elements.contributorsList.innerHTML = html;
+}
+
+// Setup post creation area
+function setupPostCreationArea() {
+    if (!elements.postInputTrigger) return;
+
+    // Open post creation modal when clicking on the post input
+    elements.postInputTrigger.addEventListener('click', () => {
+        openCreatePostModal();
+    });
+
+    // Setup post action buttons
+    if (elements.postImageButton) {
+        elements.postImageButton.addEventListener('click', () => {
+            openCreatePostModal('image');
+        });
+    }
+
+    if (elements.postTagButton) {
+        elements.postTagButton.addEventListener('click', () => {
+            openCreatePostModal('tag');
+        });
+    }
+
+    if (elements.postLocationButton) {
+        elements.postLocationButton.addEventListener('click', () => {
+            openCreatePostModal('location');
+        });
+    }
+}
+
+// Open create post modal
+function openCreatePostModal(focusOn = null) {
+    if (!elements.createPostModal || !state.currentUser) {
+        alert('You must be logged in to create a post');
+        return;
+    }
+
+    // Set user info in modal
+    if (elements.modalUserAvatar) {
+        elements.modalUserAvatar.src = state.currentUser.photoURL || 'assets/images/default-avatar.png';
+    }
+
+    if (elements.postCreatorName) {
+        elements.postCreatorName.textContent = state.currentUser.displayName || 'User';
+    }
+
+    // Load categories into dropdown
+    loadCategoriesIntoDropdown();
+
+    // Setup image upload preview
+    setupImageUploadPreview();
+
+    // Show modal
+    elements.createPostModal.style.display = 'block';
+
+    // Focus on specific field if requested
+    if (focusOn === 'image' && elements.postImage) {
+        elements.postImage.click();
+    } else if (focusOn === 'tag' && elements.postTags) {
+        elements.postTags.focus();
+    } else if (focusOn === 'location' && elements.postLocation) {
+        elements.postLocation.focus();
+    }
+}
+
+// Load categories into dropdown
+async function loadCategoriesIntoDropdown() {
+    if (!elements.postCategory) return;
+
+    try {
+        const categoriesResult = await forumsModule.getCategories();
+
+        if (categoriesResult.success) {
+            let html = '<option value="">Select a Category</option>';
+
+            categoriesResult.categories.forEach(category => {
+                html += `<option value="${category.id}">${category.name}</option>`;
+            });
+
+            elements.postCategory.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// Setup image upload preview
+function setupImageUploadPreview() {
+    if (!elements.postImage || !elements.imagePreview) return;
+
+    elements.postImage.addEventListener('change', (e) => {
+        elements.imagePreview.innerHTML = '';
+
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        for (let i = 0; i < Math.min(files.length, 5); i++) {
+            const file = files[i];
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const container = document.createElement('div');
+                container.className = 'preview-image-container';
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'preview-image';
+
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-image';
+                removeButton.innerHTML = '&times;';
+                removeButton.addEventListener('click', () => {
+                    container.remove();
+                });
+
+                container.appendChild(img);
+                container.appendChild(removeButton);
+                elements.imagePreview.appendChild(container);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Filter posts by category
+function filterPostsByCategory(categoryId) {
+    if (!elements.postFeed) return;
+
+    const posts = elements.postFeed.querySelectorAll('.post-card');
+
+    posts.forEach(post => {
+        if (categoryId === 'all' || post.getAttribute('data-category') === categoryId) {
+            post.style.display = 'block';
+        } else {
+            post.style.display = 'none';
+        }
+    });
+}
+
+// Filter posts by tags
+function filterPostsByTags(tags) {
+    // This would require server-side filtering or more complex client-side implementation
+    // For now, we'll just log the selected tags
+    console.log('Filtering by tags:', tags);
+
+    // In a real implementation, you would fetch posts with these tags from the server
+    // or filter the existing posts based on their tags
+}
+
+// Handle post actions (like, comment, share)
+function handlePostAction(e) {
+    const action = e.currentTarget.getAttribute('data-action');
+    const postId = e.currentTarget.getAttribute('data-id');
+
+    if (!state.currentUser) {
+        alert('You must be logged in to perform this action');
+        return;
+    }
+
+    switch (action) {
+        case 'like':
+            handleLikePost(postId, e.currentTarget);
+            break;
+        case 'comment':
+            window.location.href = `forum-post.html?id=${postId}#comments`;
+            break;
+        case 'share':
+            handleSharePost(postId);
+            break;
+    }
+}
+
+// Handle liking a post
+async function handleLikePost(postId, button) {
+    try {
+        const result = await forumsModule.likePost(postId);
+
+        if (result.success) {
+            // Update UI
+            button.classList.add('liked');
+            button.querySelector('i').className = 'fas fa-thumbs-up';
+
+            // Update like count
+            const likesElement = button.closest('.post-card').querySelector('.post-likes');
+            if (likesElement) {
+                const currentLikes = parseInt(likesElement.textContent.trim().split(' ')[1] || '0');
+                likesElement.innerHTML = `<i class="fas fa-thumbs-up"></i> ${currentLikes + 1}`;
+            }
+        } else {
+            alert(`Failed to like post: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error liking post:', error);
+        alert('An error occurred while liking the post');
+    }
+}
+
+// Handle sharing a post
+function handleSharePost(postId) {
+    // Create a shareable link
+    const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+
+    // Try to use the Web Share API if available
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out this post on TradeSkills',
+            url: shareUrl
+        }).catch(error => {
+            console.error('Error sharing:', error);
+            fallbackShare(shareUrl);
+        });
+    } else {
+        fallbackShare(shareUrl);
+    }
+}
+
+// Fallback sharing method
+function fallbackShare(url) {
+    // Create a temporary input to copy the URL
+    const input = document.createElement('input');
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+
+    alert('Link copied to clipboard!');
 }
 
 // Render recent activity
@@ -688,25 +1137,73 @@ async function handleCreatePost(e) {
         return;
     }
 
-    const categoryId = elements.categoryId.value;
+    const postType = elements.postType.value;
     const title = elements.postTitle.value.trim();
     const content = elements.postContent.value.trim();
+    const categoryId = elements.postCategory.value;
+    const location = elements.postLocation.value.trim();
+    const tagsInput = elements.postTags.value.trim();
 
-    if (!categoryId || !title || !content) {
-        alert('Please fill in all fields');
+    // Parse tags from comma-separated input
+    const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
+    if (!title || !content || !categoryId) {
+        alert('Please fill in all required fields (title, content, and category)');
         return;
     }
 
     try {
-        const result = await forumsModule.createPost(categoryId, title, content);
+        // Prepare images if any
+        const imageFiles = elements.postImage.files;
+        let imageUrls = [];
+
+        if (imageFiles && imageFiles.length > 0) {
+            // Show loading indicator
+            const loadingHtml = '<div class="loading">Uploading images...</div>';
+            elements.imagePreview.innerHTML += loadingHtml;
+
+            // Upload images to Firebase Storage
+            try {
+                imageUrls = await Promise.all(
+                    Array.from(imageFiles).map(file => forumsModule.uploadImage(file))
+                );
+            } catch (uploadError) {
+                console.error('Error uploading images:', uploadError);
+                alert('Failed to upload one or more images. Your post will be created without images.');
+                imageUrls = [];
+            } finally {
+                // Remove loading indicator
+                const loadingElement = elements.imagePreview.querySelector('.loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+            }
+        }
+
+        // Create post with all data
+        const result = await forumsModule.createPost({
+            categoryId,
+            title,
+            content,
+            type: postType,
+            location,
+            tags,
+            images: imageUrls
+        });
 
         if (result.success) {
             // Clear form and hide modal
             elements.createPostForm.reset();
             elements.createPostModal.style.display = 'none';
+            elements.imagePreview.innerHTML = '';
 
-            // Redirect to the new post
-            window.location.href = `forum-post.html?id=${result.postId}`;
+            // Reload posts feed
+            const postsResult = await forumsModule.getAllPosts();
+            if (postsResult.success) {
+                renderPostFeed(postsResult.posts);
+            }
+
+            alert('Post created successfully!');
         } else {
             alert(`Failed to create post: ${result.error}`);
         }
